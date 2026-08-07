@@ -1,32 +1,37 @@
 import type { User } from "@clerk/nextjs/server";
-import { BookOpen, Library, Users, Repeat } from "lucide-react";
+import Link from "next/link";
+import { BookOpen, Library, Repeat, Users, BadgeCheck } from "lucide-react";
+import type { UserBadge } from "@/generated/prisma/client";
 import Navbar from "@/components/navbar/Navbar";
 import QuickActions from "@/components/home/QuickActions";
+import BookCard, { type BookCardBook } from "@/components/books/BookCard";
+import { initials } from "@/lib/utils";
 
 interface SignedInHomeProps {
   user: User;
+  myListings: number;
+  activeExchanges: number;
+  memberCount: number;
+  recentListings: BookCardBook[];
+  badges: UserBadge[];
 }
 
-function initials(name: string | null | undefined) {
-  if (!name) return "BL";
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-}
-
-const stats = [
-  { icon: Library, label: "Books Listed", value: 0 },
-  { icon: Repeat, label: "Active Exchanges", value: 0 },
-  { icon: Users, label: "Community Members", value: "∞" },
-];
-
-export default function SignedInHome({ user }: SignedInHomeProps) {
+export default function SignedInHome({
+  user,
+  myListings,
+  activeExchanges,
+  memberCount,
+  recentListings,
+  badges,
+}: SignedInHomeProps) {
   const displayName = [user.firstName, user.lastName].filter(Boolean).join(" ");
   const email = user.emailAddresses[0]?.emailAddress ?? "";
+
+  const stats = [
+    { icon: Library, label: "Books Listed", value: myListings },
+    { icon: Repeat, label: "Active Exchanges", value: activeExchanges },
+    { icon: Users, label: "Community Members", value: memberCount },
+  ];
 
   return (
     <div className="relative min-h-screen bg-cream">
@@ -67,12 +72,20 @@ export default function SignedInHome({ user }: SignedInHomeProps) {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-white/15 px-4 py-3 backdrop-blur-sm">
+            <Link
+              href={`/profile/${user.id}`}
+              className="flex flex-wrap items-center gap-2 rounded-2xl bg-white/15 px-4 py-3 backdrop-blur-sm transition-colors hover:bg-white/25"
+            >
               <span className="text-sm font-medium text-white">
-                Your account is synced to BookLoop
+                {badges.length > 0
+                  ? `${badges.length} badge${badges.length > 1 ? "s" : ""} earned`
+                  : "Your account is synced"}
               </span>
+              {badges.length > 0 && (
+                <span className="text-base">{badges[0].icon}</span>
+              )}
               <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,0.9)]" />
-            </div>
+            </Link>
           </div>
         </section>
 
@@ -93,15 +106,69 @@ export default function SignedInHome({ user }: SignedInHomeProps) {
           ))}
         </section>
 
+        {badges.length > 0 && (
+          <section className="mt-8">
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-zinc-900">
+              <BadgeCheck className="h-5 w-5 text-amber-500" />
+              Your badges
+            </h2>
+            <div className="flex flex-wrap gap-3">
+              {badges.slice(0, 6).map((badge) => (
+                <div
+                  key={badge.id}
+                  className="flex items-center gap-2 rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 to-yellow-50 px-4 py-2.5 shadow-sm"
+                >
+                  <span className="text-xl">{badge.icon}</span>
+                  <span className="text-sm font-semibold text-zinc-900">
+                    {badge.badgeName}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         <section className="mt-8">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-zinc-900">
-              Start swapping
+              Fresh on the market
             </h2>
-            <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
-              Beta
-            </span>
+            <Link
+              href="/browse"
+              className="text-sm font-medium text-amber-600 hover:text-amber-700"
+            >
+              Browse all →
+            </Link>
           </div>
+          {recentListings.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-amber-200 bg-white/60 px-6 py-12 text-center">
+              <p className="text-2xl">📚</p>
+              <p className="mt-2 font-semibold text-zinc-900">
+                The market is waiting for your books
+              </p>
+              <p className="mt-1 text-sm text-stone-500">
+                Be the first to list a book in your community.
+              </p>
+              <Link
+                href="/listings/new"
+                className="mt-4 inline-flex rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-amber-500/30 transition-all hover:from-amber-600 hover:to-amber-700"
+              >
+                List your first book
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {recentListings.map((book) => (
+                <BookCard key={book.id} book={book} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="mt-8">
+          <h2 className="mb-4 text-lg font-semibold text-zinc-900">
+            Jump back in
+          </h2>
           <QuickActions />
         </section>
 
