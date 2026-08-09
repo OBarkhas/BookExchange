@@ -3,12 +3,6 @@ import type { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getDbUser } from "@/lib/auth";
 
-/**
- * GET /api/requests?type=sent|received
- *
- * Returns the current user's exchange requests. Each request includes the
- * book, both users, and a preview of the latest message.
- */
 export async function GET(req: NextRequest) {
   try {
     const user = await getDbUser();

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getDbUser } from "@/lib/auth";
 
-/** DELETE /api/wishlist/[id] — remove an item from your wishlist. */
 export async function DELETE(
   _req: Request,
   { params }: RouteContext<"/api/wishlist/[id]">,

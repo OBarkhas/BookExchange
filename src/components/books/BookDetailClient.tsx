@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import {
   Rocket,
   Trash2,
@@ -17,9 +18,6 @@ import Textarea from "@/components/ui/Textarea";
 import Input from "@/components/ui/Input";
 import { showToast } from "@/components/ui/ToastContainer";
 
-/* ------------------------------------------------------------------ */
-/* Owner actions: bump, toggle availability, delete                    */
-/* ------------------------------------------------------------------ */
 
 export function ListingOwnerActions({
   bookId,
@@ -31,6 +29,7 @@ export function ListingOwnerActions({
   isExpired: boolean;
 }) {
   const router = useRouter();
+  const { user } = useUser();
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -54,7 +53,7 @@ export function ListingOwnerActions({
       } else {
         await fetcher(`/api/listings/${bookId}`, { method: "DELETE" });
         showToast("Listing deleted");
-        router.push("/shelf");
+        router.push(user ? `/profile/${user.id}` : "/browse");
       }
       router.refresh();
     } catch (err) {
@@ -129,9 +128,6 @@ export function ListingOwnerActions({
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Request button + modal for buyers/swappers                          */
-/* ------------------------------------------------------------------ */
 
 export function RequestBookButton({
   listingId,

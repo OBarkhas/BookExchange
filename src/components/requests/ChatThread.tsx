@@ -16,7 +16,6 @@ interface ChatThreadProps {
   requestId: string;
   initialMessages: ChatMessage[];
   myId: string;
-  /** Book title shown in the header. */
   title: string;
 }
 
@@ -36,12 +35,10 @@ export default function ChatThread({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
-  // Initial scroll on mount
   useEffect(() => {
     bottomRef.current?.scrollIntoView();
   }, []);
 
-  // Poll for new messages every 3 seconds
   useEffect(() => {
     let cancelled = false;
     const poll = async () => {
@@ -58,7 +55,6 @@ export default function ChatThread({
           scrollToBottom();
         }
       } catch {
-        /* ignore transient polling errors */
       }
     };
     poll();
@@ -130,6 +126,7 @@ export default function ChatThread({
                   name={message.sender.name}
                   imageUrl={message.sender.imageUrl}
                   size="xs"
+                  userId={message.sender.id}
                   className={mine ? "ring-amber-300" : "ring-stone-200"}
                 />
                 <div

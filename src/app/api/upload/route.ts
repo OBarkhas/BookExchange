@@ -2,15 +2,8 @@ import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { getDbUser } from "@/lib/auth";
 
-const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
+const MAX_FILE_SIZE = 4 * 1024 * 1024;
 
-/**
- * POST /api/upload
- *
- * Accepts a single image file (FormData field "file"), uploads it to Vercel
- * Blob with public access, and returns its public URL. Requires a signed-in
- * user so unauthenticated visitors can't burn storage.
- */
 export async function POST(request: Request) {
   try {
     const user = await getDbUser();
@@ -18,7 +11,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Reject oversized uploads before buffering the request body.
     const contentLength = Number(request.headers.get("content-length") ?? 0);
     if (contentLength > MAX_FILE_SIZE) {
       return NextResponse.json(

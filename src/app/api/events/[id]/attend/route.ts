@@ -3,7 +3,6 @@ import { db } from "@/lib/db";
 import { getDbUser } from "@/lib/auth";
 import { createNotification } from "@/lib/notify";
 
-/** POST /api/events/[id]/attend — RSVP to an event. */
 export async function POST(
   _req: Request,
   { params }: RouteContext<"/api/events/[id]/attend">,
@@ -50,7 +49,6 @@ export async function POST(
   }
 }
 
-/** DELETE /api/events/[id]/attend — cancel RSVP. */
 export async function DELETE(
   _req: Request,
   { params }: RouteContext<"/api/events/[id]/attend">,

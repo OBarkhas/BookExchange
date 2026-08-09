@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getDbUser } from "@/lib/auth";
 
-/** GET /api/wishlist — the current user's wishlist. */
 export async function GET() {
   try {
     const user = await getDbUser();
@@ -25,7 +24,6 @@ export async function GET() {
   }
 }
 
-/** POST /api/wishlist — add a book you're hunting for. */
 export async function POST(req: Request) {
   try {
     const user = await getDbUser();

@@ -19,6 +19,8 @@ type ListingTypeValue = "EXCHANGE_ONLY" | "SELL_ONLY" | "BOTH";
 interface BookFormProps {
   mode: "create" | "edit";
   book?: Book;
+  onSaved?: () => void;
+  onCancel?: () => void;
 }
 
 const listingTypeOptions: {
@@ -32,7 +34,12 @@ const listingTypeOptions: {
   { value: "BOTH", label: "Swap or sell", desc: "Happy with either", icon: ArrowLeftRight },
 ];
 
-export default function BookForm({ mode, book }: BookFormProps) {
+export default function BookForm({
+  mode,
+  book,
+  onSaved,
+  onCancel,
+}: BookFormProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
 
@@ -103,8 +110,12 @@ export default function BookForm({ mode, book }: BookFormProps) {
           body: JSON.stringify(payload),
         });
         showToast("Listing updated!");
-        router.push(`/listings/${book.id}`);
-        router.refresh();
+        if (onSaved) {
+          onSaved();
+        } else {
+          router.push(`/listings/${book.id}`);
+          router.refresh();
+        }
       } else {
         const data = await fetcher<{ book: Book }>("/api/listings", {
           method: "POST",
@@ -277,7 +288,7 @@ export default function BookForm({ mode, book }: BookFormProps) {
           <Button
             type="button"
             variant="ghost"
-            onClick={() => router.back()}
+            onClick={onCancel ?? (() => router.back())}
             disabled={submitting}
           >
             Cancel

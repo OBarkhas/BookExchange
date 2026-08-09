@@ -1,6 +1,5 @@
 import { db } from "@/lib/db";
 
-/** Creates an in-app notification. Never throws — callers treat it as fire-and-forget. */
 export async function createNotification(
   userId: string,
   title: string,

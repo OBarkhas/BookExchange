@@ -4,7 +4,6 @@ import { db } from "@/lib/db";
 import { getDbUser } from "@/lib/auth";
 import { checkAndAwardBadges } from "@/lib/badges";
 
-/** GET /api/events — upcoming swap meets, newest dates first, with attendee counts. */
 export async function GET(req: NextRequest) {
   try {
     const user = await getDbUser();
@@ -39,7 +38,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-/** POST /api/events — host a new swap meet. */
 export async function POST(req: Request) {
   try {
     const user = await getDbUser();
@@ -70,7 +68,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Create the event and auto-RSVP the organizer atomically.
     const event = await db.$transaction(async (tx) => {
       const created = await tx.event.create({
         data: {

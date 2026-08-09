@@ -96,6 +96,7 @@ export default async function EventDetailPage({
               name={event.organizer.name}
               imageUrl={event.organizer.imageUrl}
               size="md"
+              userId={event.organizer.id}
             />
             <div>
               <p className="text-sm font-semibold text-zinc-900">

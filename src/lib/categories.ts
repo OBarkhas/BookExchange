@@ -50,6 +50,11 @@ export const CONDITION_COLORS: Record<BookCondition, string> = {
   ACCEPTABLE: "bg-amber-50 text-amber-700 ring-amber-200",
 };
 
+export const EXCHANGE_LOCKED_STATUSES: RequestStatus[] = [
+  "ACCEPTED",
+  "COMPLETED",
+];
+
 export const REQUEST_STATUS_COLORS: Record<RequestStatus, string> = {
   PENDING: "bg-amber-50 text-amber-700 ring-amber-200",
   ACCEPTED: "bg-emerald-50 text-emerald-700 ring-emerald-200",

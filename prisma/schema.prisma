@@ -102,6 +102,9 @@ model ExchangeRequest {
 
   messages    Message[]
   createdAt   DateTime      @default(now())
+
+  hiddenBySender   Boolean     @default(false)
+  hiddenByReceiver Boolean     @default(false)
 }
 
 model Message {

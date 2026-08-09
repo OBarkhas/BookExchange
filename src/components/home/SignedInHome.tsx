@@ -2,7 +2,7 @@ import type { User } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { BookOpen, Library, Repeat, Users, BadgeCheck } from "lucide-react";
 import type { UserBadge } from "@/generated/prisma/client";
-import Navbar from "@/components/navbar/Navbar";
+import AppShell from "@/components/navbar/AppShell";
 import QuickActions from "@/components/home/QuickActions";
 import BookCard, { type BookCardBook } from "@/components/books/BookCard";
 import { initials } from "@/lib/utils";
@@ -34,30 +34,31 @@ export default function SignedInHome({
   ];
 
   return (
-    <div className="relative min-h-screen bg-cream">
-      <div className="animate-blob pointer-events-none absolute -top-40 right-0 h-[26rem] w-[26rem] rounded-full bg-amber-200/40 blur-3xl" />
-      <div className="animate-blob pointer-events-none absolute left-0 top-1/2 h-80 w-80 rounded-full bg-yellow-100/60 blur-3xl [animation-delay:-6s]" />
-
-      <Navbar />
-
-      <main className="relative z-10 mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+    <AppShell userId={user.id}>
+      <div className="py-2">
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 p-8 shadow-xl shadow-amber-500/25 sm:p-10">
           <div className="absolute inset-0 bg-[radial-gradient(#ffffff33_1px,transparent_1px)] bg-[size:20px_20px] opacity-30" />
           <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/15 blur-2xl" />
 
           <div className="relative flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-5">
-              {user.imageUrl ? (
-                <img
-                  src={user.imageUrl}
-                  alt={displayName || "Profile"}
-                  className="h-16 w-16 rounded-2xl border-2 border-white/60 object-cover shadow-lg sm:h-20 sm:w-20"
-                />
-              ) : (
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-white/60 bg-white/20 text-2xl font-bold text-white shadow-lg sm:h-20 sm:w-20">
-                  {initials(displayName)}
-                </div>
-              )}
+              <Link
+                href={`/profile/${user.id}`}
+                title="Open my profile"
+                className="transition-transform duration-200 hover:scale-105 active:scale-95"
+              >
+                {user.imageUrl ? (
+                  <img
+                    src={user.imageUrl}
+                    alt={displayName || "Profile"}
+                    className="h-16 w-16 rounded-2xl border-2 border-white/60 object-cover shadow-lg sm:h-20 sm:w-20"
+                  />
+                ) : (
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-white/60 bg-white/20 text-2xl font-bold text-white shadow-lg sm:h-20 sm:w-20">
+                    {initials(displayName)}
+                  </div>
+                )}
+              </Link>
               <div className="text-white">
                 <p className="text-sm font-medium text-amber-50/90">
                   Welcome back,
@@ -175,7 +176,7 @@ export default function SignedInHome({
         <footer className="mt-14 border-t border-amber-100 pb-4 pt-6 text-center text-sm text-stone-400">
           BookLoop — give your read books a new life. 📚
         </footer>
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }

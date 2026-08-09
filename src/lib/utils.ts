@@ -1,4 +1,3 @@
-/** Number of days a book listing stays live before expiring. */
 export const LISTING_DURATION_DAYS = 30;
 
 export function cn(...classes: Array<string | false | null | undefined>): string {
@@ -67,7 +66,6 @@ export function daysRemaining(input: Date | string): number {
   return Math.max(0, Math.ceil((date.getTime() - Date.now()) / 86_400_000));
 }
 
-/** Generic JSON fetch used by client components. Throws on non-2xx responses. */
 export async function fetcher<T>(
   url: string,
   options?: RequestInit,

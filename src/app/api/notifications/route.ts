@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getDbUser } from "@/lib/auth";
 
-/** GET /api/notifications — the current user's inbox, unread first. */
 export async function GET() {
   try {
     const user = await getDbUser();
@@ -28,7 +27,6 @@ export async function GET() {
   }
 }
 
-/** PATCH /api/notifications?all=1 — mark every notification as read. */
 export async function PATCH() {
   try {
     const user = await getDbUser();

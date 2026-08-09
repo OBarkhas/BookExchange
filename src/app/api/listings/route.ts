@@ -20,13 +20,6 @@ const VALID_LISTING_TYPES = new Set<ListingType>([
   "BOTH",
 ]);
 
-/**
- * GET /api/listings
- *
- * Search & filter listings. Supported query params:
- *   q, category, district, condition (comma-separated), listingType,
- *   sort (recent | oldest | price_asc | price_desc), page
- */
 export async function GET(req: NextRequest) {
   try {
     const sp = req.nextUrl.searchParams;
@@ -38,7 +31,6 @@ export async function GET(req: NextRequest) {
     const sort = sp.get("sort") || "recent";
     const page = Math.max(1, Number(sp.get("page") ?? 1));
 
-    // Whitelist enum values from the URL so malformed params never 500.
     const condition = conditionRaw
       ? (conditionRaw
           .split(",")
@@ -116,12 +108,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-/**
- * POST /api/listings
- *
- * Creates a new book listing owned by the current user. Listings live for
- * 30 days (expiresAt) and can be "bumped" to extend their lifespan.
- */
 export async function POST(req: Request) {
   try {
     const user = await getDbUser();

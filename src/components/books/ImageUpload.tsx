@@ -5,7 +5,7 @@ import { ImagePlus, X, Loader2, UploadCloud } from "lucide-react";
 import { showToast } from "@/components/ui/ToastContainer";
 import { cn } from "@/lib/utils";
 
-const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
+const MAX_FILE_SIZE = 4 * 1024 * 1024;
 
 interface ImageUploadProps {
   images: string[];

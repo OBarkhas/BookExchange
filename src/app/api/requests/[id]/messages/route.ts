@@ -8,7 +8,6 @@ const isParticipant = (
   userId: string,
 ) => request.senderId === userId || request.receiverId === userId;
 
-/** GET /api/requests/[id]/messages — full thread, oldest first. */
 export async function GET(
   _req: Request,
   { params }: RouteContext<"/api/requests/[id]/messages">,
@@ -49,7 +48,6 @@ export async function GET(
   }
 }
 
-/** POST /api/requests/[id]/messages — send a message on the thread. */
 export async function POST(
   req: Request,
   { params }: RouteContext<"/api/requests/[id]/messages">,
@@ -83,6 +81,11 @@ export async function POST(
         { status: 400 },
       );
     }
+
+    await db.exchangeRequest.update({
+      where: { id },
+      data: { hiddenBySender: false, hiddenByReceiver: false },
+    });
 
     const message = await db.message.create({
       data: {

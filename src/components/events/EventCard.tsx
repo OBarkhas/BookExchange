@@ -67,6 +67,7 @@ export default function EventCard({ event, myId, attending }: EventCardProps) {
               name={event.organizer.name}
               imageUrl={event.organizer.imageUrl}
               size="xs"
+              userId={event.organizer.id}
             />
             <div className="leading-tight">
               <p className="text-xs font-medium text-stone-700">

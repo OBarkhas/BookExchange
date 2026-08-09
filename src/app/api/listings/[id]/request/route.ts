@@ -3,12 +3,6 @@ import { db } from "@/lib/db";
 import { getDbUser } from "@/lib/auth";
 import { createNotification } from "@/lib/notify";
 
-/**
- * POST /api/listings/[id]/request
- *
- * Submits an exchange/sale request from the current user to the listing owner.
- * Chat is unlocked as soon as this request exists.
- */
 export async function POST(
   req: Request,
   { params }: RouteContext<"/api/listings/[id]/request">,

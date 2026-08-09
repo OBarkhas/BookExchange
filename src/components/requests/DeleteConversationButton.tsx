@@ -1,0 +1,75 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
+import { fetcher } from "@/lib/utils";
+import Modal from "@/components/ui/Modal";
+import Button from "@/components/ui/Button";
+import { showToast } from "@/components/ui/ToastContainer";
+
+export default function DeleteConversationButton({
+  requestId,
+}: {
+  requestId: string;
+}) {
+  const router = useRouter();
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const remove = async () => {
+    setDeleting(true);
+    try {
+      await fetcher(`/api/requests/${requestId}/conversation`, {
+        method: "DELETE",
+      });
+      setConfirming(false);
+      showToast("Conversation hidden from your messages");
+      router.push("/messages");
+      router.refresh();
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : "Could not remove conversation",
+        "error",
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <>
+      <button
+        onClick={() => setConfirming(true)}
+        aria-label="Delete conversation"
+        title="Delete conversation"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-stone-400 transition-colors hover:bg-rose-50 hover:text-rose-500"
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+
+      <Modal
+        open={confirming}
+        onClose={() => setConfirming(false)}
+        title="Delete this conversation?"
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirming(false)}>
+              Cancel
+            </Button>
+            <Button variant="danger" loading={deleting} onClick={remove}>
+              <Trash2 className="h-4 w-4" /> Delete
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm leading-relaxed text-stone-600">
+          This hides the chat from your message list and closes this thread for
+          you. The other reader&apos;s copy stays intact, and the conversation
+          reappears if either of you sends a new message.
+        </p>
+      </Modal>
+    </>
+  );
+}

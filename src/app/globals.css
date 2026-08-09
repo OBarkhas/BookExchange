@@ -19,7 +19,6 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
-/* Toast animations */
 @keyframes toast-enter {
   from {
     opacity: 0;
@@ -50,7 +49,6 @@ body {
   animation: toast-exit 0.25s ease-in forwards;
 }
 
-/* Slow drift for decorative background blobs */
 @keyframes blob-drift {
   0%,
   100% {

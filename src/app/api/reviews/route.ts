@@ -4,11 +4,6 @@ import { getDbUser } from "@/lib/auth";
 import { createNotification } from "@/lib/notify";
 import { checkAndAwardBadges } from "@/lib/badges";
 
-/**
- * POST /api/reviews  body: { receiverId, rating, comment }
- *
- * One review per (reviewer, receiver) pair — posting again updates the existing one.
- */
 export async function POST(req: Request) {
   try {
     const user = await getDbUser();
@@ -56,8 +51,6 @@ export async function POST(req: Request) {
         ? body.comment.trim().slice(0, 500)
         : null;
 
-    // One review per (reviewer, receiver) pair, enforced atomically by the
-    // @@unique constraint and upsert.
     const review = await db.review.upsert({
       where: {
         reviewerId_receiverId: { reviewerId: user.id, receiverId },

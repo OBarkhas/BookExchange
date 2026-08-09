@@ -93,6 +93,7 @@ export default function RequestCard({ request, myId }: RequestCardProps) {
               name={counterpart.name}
               imageUrl={counterpart.imageUrl}
               size="sm"
+              userId={counterpart.id}
             />
             <div className="leading-tight">
               <p className="text-sm font-medium text-stone-700">

@@ -38,7 +38,6 @@ export default function NotificationBell() {
           setUnread(data.unreadCount);
         })
         .catch(() => {
-          /* ignore polling errors */
         });
     };
 

@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getDbUser } from "@/lib/auth";
 import { LISTING_DURATION_DAYS } from "@/lib/utils";
+import { EXCHANGE_LOCKED_STATUSES } from "@/lib/categories";
 import type { BookCondition, ListingType } from "@/generated/prisma/client";
 
-/** GET /api/listings/[id] — public listing detail with owner info. */
 export async function GET(
   _req: Request,
   { params }: RouteContext<"/api/listings/[id]">,
@@ -42,14 +42,6 @@ export async function GET(
   }
 }
 
-/**
- * PATCH /api/listings/[id]
- *
- * Owner-only. Supports:
- *   - full field updates (edit form)
- *   - { bump: true } — resets lastBumpedAt and extends expiry by 30 days
- *   - { isAvailable: bool } — toggle availability
- */
 export async function PATCH(
   req: Request,
   { params }: RouteContext<"/api/listings/[id]">,
@@ -91,6 +83,20 @@ export async function PATCH(
         data: { isAvailable: body.isAvailable },
       });
       return NextResponse.json({ book: updated });
+    }
+
+    const locked = await db.exchangeRequest.findFirst({
+      where: { bookId: id, status: { in: EXCHANGE_LOCKED_STATUSES } },
+      select: { id: true },
+    });
+    if (locked) {
+      return NextResponse.json(
+        {
+          error:
+            "This listing has an active or completed exchange and cannot be edited.",
+        },
+        { status: 409 },
+      );
     }
 
     const { title, author, category, condition, hasDamage, damageDescription, images, listingType, price, exchangePreference, description } = body as Record<string, unknown>;
@@ -150,7 +156,6 @@ export async function PATCH(
   }
 }
 
-/** DELETE /api/listings/[id] — owner only. Related requests cascade. */
 export async function DELETE(
   _req: Request,
   { params }: RouteContext<"/api/listings/[id]">,

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getDbUser } from "@/lib/auth";
 
-/** PATCH /api/notifications/[id] — mark a notification as read. */
 export async function PATCH(
   _req: Request,
   { params }: RouteContext<"/api/notifications/[id]">,
@@ -34,7 +33,6 @@ export async function PATCH(
   }
 }
 
-/** DELETE /api/notifications/[id] — dismiss a notification. */
 export async function DELETE(
   _req: Request,
   { params }: RouteContext<"/api/notifications/[id]">,

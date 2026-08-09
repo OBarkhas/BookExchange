@@ -4,7 +4,6 @@ import { getDbUser } from "@/lib/auth";
 import { checkAndAwardBadges } from "@/lib/badges";
 import type { ShelfStatus } from "@/generated/prisma/client";
 
-/** GET /api/shelf — the current user's virtual bookshelf. */
 export async function GET() {
   try {
     const user = await getDbUser();
@@ -27,7 +26,6 @@ export async function GET() {
   }
 }
 
-/** POST /api/shelf — add a book to your shelf. */
 export async function POST(req: Request) {
   try {
     const user = await getDbUser();

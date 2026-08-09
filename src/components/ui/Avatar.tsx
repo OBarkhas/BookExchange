@@ -1,9 +1,13 @@
+"use client";
+
+import Link from "next/link";
 import { cn, initials } from "@/lib/utils";
 
 interface AvatarProps {
   name?: string | null;
   imageUrl?: string | null;
   size?: "xs" | "sm" | "md" | "lg" | "xl";
+  userId?: string;
   className?: string;
 }
 
@@ -19,13 +23,17 @@ export default function Avatar({
   name,
   imageUrl,
   size = "md",
+  userId,
   className,
 }: AvatarProps) {
-  return (
+  const hasRingOverride = className?.includes("ring-");
+
+  const inner = (
     <div
       className={cn(
-        "relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-amber-100 to-amber-200 font-bold text-amber-700 ring-2 ring-amber-200/70",
+        "relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-amber-100 to-amber-200 font-bold text-amber-700",
         sizes[size],
+        !hasRingOverride && "ring-1 ring-amber-200/60",
         className,
       )}
     >
@@ -39,5 +47,18 @@ export default function Avatar({
         <span>{initials(name)}</span>
       )}
     </div>
+  );
+
+  if (!userId) return inner;
+
+  return (
+    <Link
+      href={`/profile/${userId}`}
+      aria-label={name ? `View ${name}'s profile` : "View profile"}
+      onClick={(e) => e.stopPropagation()}
+      className="shrink-0 rounded-full transition-transform duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 active:scale-95"
+    >
+      {inner}
+    </Link>
   );
 }

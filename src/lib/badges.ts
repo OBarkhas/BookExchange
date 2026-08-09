@@ -51,10 +51,6 @@ export const BADGE_ORDER: BadgeKey[] = [
   "BOOKWORM",
 ];
 
-/**
- * Recalculates the user's badge eligibility and awards any newly earned
- * badges (each with a notification). Safe to call after any activity.
- */
 export async function checkAndAwardBadges(userId: string) {
   const [listingCount, completedCount, reviewResult, eventCount, shelfCount, existingBadges] =
     await Promise.all([
@@ -91,7 +87,6 @@ export async function checkAndAwardBadges(userId: string) {
   for (const key of earned) {
     const badge = BADGES[key];
     if (owned.has(badge.name)) continue;
-    // Upsert keeps badge rows unique even when concurrent actions race.
     await db.userBadge.upsert({
       where: { userId_badgeName: { userId, badgeName: badge.name } },
       create: { userId, badgeName: badge.name, icon: badge.icon },

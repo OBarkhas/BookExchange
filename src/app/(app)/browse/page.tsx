@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import type { BookCondition, ListingType } from "@/generated/prisma/client";
 import BookCard, { type BookCardBook } from "@/components/books/BookCard";
 import BookFilters, { type FilterState } from "@/components/books/BookFilters";
+import EventBanner from "@/components/events/EventBanner";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
@@ -86,7 +87,7 @@ export default async function BrowsePage({
           ? { createdAt: "asc" as const }
           : { lastBumpedAt: "desc" as const };
 
-  const [listings, total, districtsResult] = await Promise.all([
+  const [listings, total, districtsResult, upcomingEvents] = await Promise.all([
     db.book.findMany({
       where,
       orderBy,
@@ -103,6 +104,18 @@ export default async function BrowsePage({
       },
       select: { district: true },
       distinct: ["district"],
+    }),
+    db.event.findMany({
+      where: { eventDate: { gte: new Date() } },
+      orderBy: { eventDate: "asc" },
+      take: 3,
+      select: {
+        id: true,
+        title: true,
+        location: true,
+        eventDate: true,
+        _count: { select: { attendees: true } },
+      },
     }),
   ]);
 
@@ -122,7 +135,6 @@ export default async function BrowsePage({
     sort,
   };
 
-  // Remount filters when the URL changes (back/forward, cleared query).
   const filterKey = [q, category, conditionParam, listingType, district, sort].join("|");
 
   return (
@@ -131,6 +143,8 @@ export default async function BrowsePage({
         title="Browse Books"
         subtitle={`${total} pre-loved ${total === 1 ? "book" : "books"} waiting for a new home`}
       />
+
+      <EventBanner events={upcomingEvents} />
 
       <BookFilters key={filterKey} initial={initialFilters} districts={districts} />
 

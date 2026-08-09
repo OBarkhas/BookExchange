@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getDbUser } from "@/lib/auth";
 
-/** GET /api/events/[id] — event detail with attendees. */
 export async function GET(
   _req: Request,
   { params }: RouteContext<"/api/events/[id]">,
@@ -38,7 +37,6 @@ export async function GET(
   }
 }
 
-/** PATCH /api/events/[id] — organizer only. */
 export async function PATCH(
   req: Request,
   { params }: RouteContext<"/api/events/[id]">,
@@ -86,7 +84,6 @@ export async function PATCH(
   }
 }
 
-/** DELETE /api/events/[id] — organizer only. */
 export async function DELETE(
   _req: Request,
   { params }: RouteContext<"/api/events/[id]">,

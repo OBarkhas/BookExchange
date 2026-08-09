@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-/** GET /api/users/[id]/reviews — reviews a user has received, plus average. */
 export async function GET(
   _req: Request,
   { params }: RouteContext<"/api/users/[id]/reviews">,

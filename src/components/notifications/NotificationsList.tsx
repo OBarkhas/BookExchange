@@ -29,7 +29,6 @@ export default function NotificationsList() {
         if (!cancelled) setNotifications(data.notifications);
       })
       .catch(() => {
-        /* ignore */
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

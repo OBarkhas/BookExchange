@@ -10,7 +10,6 @@ import type { RequestStatus } from "@/generated/prisma/client";
 interface RequestActionsProps {
   requestId: string;
   status: RequestStatus;
-  /** Whether the current user is the receiver (listing owner). */
   isOwner: boolean;
 }
 

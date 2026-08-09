@@ -3,15 +3,6 @@ import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { syncUserFromClerk } from "@/lib/auth";
 
-/**
- * POST /api/auth/sync
- *
- * Reads the authenticated Clerk user via currentUser() and guarantees the
- * matching row exists in the Neon database (upsert). Returns the synced row
- * plus a `created` flag so the frontend can greet brand-new users.
- *
- * This removes the need for Clerk webhooks / ngrok during local development.
- */
 export async function POST() {
   try {
     const clerkUser = await currentUser();
@@ -19,7 +10,6 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Cheap indexed read before the upsert so we can report `created`.
     const existing = await db.user.findUnique({
       where: { id: clerkUser.id },
       select: { id: true },

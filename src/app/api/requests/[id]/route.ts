@@ -10,7 +10,6 @@ const isParticipant = (
   userId: string,
 ) => request.senderId === userId || request.receiverId === userId;
 
-/** GET /api/requests/[id] — full detail (participants only). */
 export async function GET(
   _req: Request,
   { params }: RouteContext<"/api/requests/[id]">,
@@ -58,14 +57,6 @@ export async function GET(
   }
 }
 
-/**
- * PATCH /api/requests/[id]  body: { status }
- *
- * PENDING   → receiver may ACCEPT or REJECT (decline); sender may REJECT (cancel)
- * ACCEPTED  → either participant may mark COMPLETED
- *
- * Completing a request marks the book as unavailable and awards badges to both.
- */
 export async function PATCH(
   req: Request,
   { params }: RouteContext<"/api/requests/[id]">,
@@ -123,14 +114,12 @@ export async function PATCH(
         );
       }
     } else {
-      // REJECTED (or COMPLETED): terminal states, no more transitions.
       return NextResponse.json(
         { error: "This request can no longer be changed" },
         { status: 400 },
       );
     }
 
-    // Completing is guarded so only one of two concurrent PATCHes wins.
     let updated;
     if (status === "COMPLETED") {
       const result = await db.exchangeRequest.updateMany({
@@ -180,7 +169,6 @@ export async function PATCH(
         `You and ${user.name ?? "your partner"} completed the swap for "${request.book.title}". Please leave a review!`,
         `/profile/${counterpartId}`,
       );
-      // Award badges to both parties for completing an exchange.
       await Promise.all([
         checkAndAwardBadges(request.senderId),
         checkAndAwardBadges(request.receiverId),

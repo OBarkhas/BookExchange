@@ -24,11 +24,11 @@ export default function BookCard({ book }: BookCardProps) {
   const forSale = book.price != null;
 
   return (
-    <Link
-      href={`/listings/${book.id}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-amber-100 bg-white/90 shadow-sm shadow-amber-900/5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-amber-300 hover:shadow-lg hover:shadow-amber-500/10"
-    >
-      <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-amber-100 via-amber-50 to-yellow-100">
+    <div className="group flex flex-col overflow-hidden rounded-2xl border border-amber-100 bg-white/90 shadow-sm shadow-amber-900/5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-amber-300 hover:shadow-lg hover:shadow-amber-500/10">
+      <Link
+        href={`/listings/${book.id}`}
+        className="relative block aspect-[4/3] overflow-hidden bg-gradient-to-br from-amber-100 via-amber-50 to-yellow-100"
+      >
         {cover ? (
           <img
             src={cover}
@@ -51,12 +51,15 @@ export default function BookCard({ book }: BookCardProps) {
             {formatPrice(book.price)}
           </div>
         )}
-      </div>
+      </Link>
 
       <div className="flex flex-1 flex-col p-4">
-        <h3 className="line-clamp-1 font-semibold text-zinc-900 transition-colors group-hover:text-amber-700">
+        <Link
+          href={`/listings/${book.id}`}
+          className="line-clamp-1 font-semibold text-zinc-900 transition-colors group-hover:text-amber-700"
+        >
           {book.title}
-        </h3>
+        </Link>
         <p className="mt-0.5 line-clamp-1 text-sm text-stone-500">{book.author}</p>
 
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
@@ -71,14 +74,17 @@ export default function BookCard({ book }: BookCardProps) {
         </div>
 
         <div className="mt-auto flex items-center justify-between pt-4">
-          <div className="flex items-center gap-2">
+          <Link
+            href={`/profile/${book.user.id}`}
+            className="flex items-center gap-2 rounded-lg transition-colors hover:bg-amber-50/70"
+          >
             <Avatar
               name={book.user.name}
               imageUrl={book.user.imageUrl}
               size="xs"
             />
             <div className="leading-tight">
-              <p className="text-xs font-medium text-stone-700">
+              <p className="text-xs font-medium text-stone-700 group-hover:text-amber-700">
                 {book.user.name ?? "Book lover"}
               </p>
               {book.user.district && (
@@ -87,7 +93,7 @@ export default function BookCard({ book }: BookCardProps) {
                 </p>
               )}
             </div>
-          </div>
+          </Link>
           {!forSale && (
             <span className="flex items-center gap-1 rounded-lg bg-teal-50 px-2 py-1 text-[11px] font-semibold text-teal-600">
               <ArrowLeftRight className="h-3 w-3" /> Swap
@@ -99,6 +105,6 @@ export default function BookCard({ book }: BookCardProps) {
           Bumped {timeAgo(book.lastBumpedAt)}
         </p>
       </div>
-    </Link>
+    </div>
   );
 }

@@ -3,7 +3,6 @@ import { db } from "@/lib/db";
 import { getDbUser } from "@/lib/auth";
 import type { ShelfStatus } from "@/generated/prisma/client";
 
-/** PATCH /api/shelf/[id] — update status / rating / title / author. */
 export async function PATCH(
   req: Request,
   { params }: RouteContext<"/api/shelf/[id]">,
@@ -54,7 +53,6 @@ export async function PATCH(
   }
 }
 
-/** DELETE /api/shelf/[id] — remove a book from your shelf. */
 export async function DELETE(
   _req: Request,
   { params }: RouteContext<"/api/shelf/[id]">,

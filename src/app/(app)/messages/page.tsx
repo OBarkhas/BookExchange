@@ -1,25 +1,24 @@
 import Link from "next/link";
-import { MessageSquare, ChevronRight } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { db } from "@/lib/db";
 import { getDbUser } from "@/lib/auth";
-import {
-  REQUEST_STATUS_COLORS,
-  REQUEST_STATUS_LABELS,
-} from "@/lib/categories";
-import { timeAgo } from "@/lib/utils";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
-import StatusBadge from "@/components/ui/StatusBadge";
-import Avatar from "@/components/ui/Avatar";
+import ConversationRow from "@/components/requests/ConversationRow";
 
 export default async function MessagesPage() {
   const user = await getDbUser();
 
-  const requests = await db.exchangeRequest.findMany({
-    where: { OR: [{ senderId: user!.id }, { receiverId: user!.id }] },
+  const conversations = await db.exchangeRequest.findMany({
+    where: {
+      OR: [
+        { senderId: user!.id, hiddenBySender: false },
+        { receiverId: user!.id, hiddenByReceiver: false },
+      ],
+    },
     orderBy: { createdAt: "desc" },
     include: {
-      book: { select: { id: true, title: true, images: true } },
+      book: { select: { title: true } },
       sender: { select: { id: true, name: true, imageUrl: true } },
       receiver: { select: { id: true, name: true, imageUrl: true } },
       messages: {
@@ -30,7 +29,7 @@ export default async function MessagesPage() {
     },
   });
 
-  const sorted = [...requests].sort((a, b) => {
+  const sorted = [...conversations].sort((a, b) => {
     const aDate = a.messages[0]?.createdAt ?? a.createdAt;
     const bDate = b.messages[0]?.createdAt ?? b.createdAt;
     return new Date(bDate).getTime() - new Date(aDate).getTime();
@@ -59,49 +58,13 @@ export default async function MessagesPage() {
         />
       ) : (
         <div className="space-y-3">
-          {sorted.map((request) => {
-            const counterpart =
-              request.sender.id === user!.id ? request.receiver : request.sender;
-            const last = request.messages[0];
-            return (
-              <Link
-                key={request.id}
-                href={`/messages/${request.id}`}
-                className="flex items-center gap-4 rounded-2xl border border-amber-100 bg-white/85 p-4 shadow-sm shadow-amber-900/5 transition-all duration-300 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md"
-              >
-                <Avatar
-                  name={counterpart.name}
-                  imageUrl={counterpart.imageUrl}
-                  size="md"
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-sm font-semibold text-zinc-900">
-                      {counterpart.name ?? "Book lover"}
-                    </p>
-                    <span className="shrink-0 text-[11px] text-stone-400">
-                      {timeAgo(last?.createdAt ?? request.createdAt)}
-                    </span>
-                  </div>
-                  <p className="truncate text-xs text-stone-500">
-                    <span className="font-medium text-amber-600">
-                      {request.book.title}
-                    </span>{" "}
-                    · {last ? (last.senderId === user!.id ? "You: " : "") + last.content : "Say hello 👋"}
-                  </p>
-                </div>
-                <div className="flex shrink-0 flex-col items-end gap-1.5">
-                  <StatusBadge
-                    label={REQUEST_STATUS_LABELS[request.status]}
-                    className={REQUEST_STATUS_COLORS[request.status]}
-                  />
-                  <span className="flex items-center text-amber-500">
-                    <ChevronRight className="h-4 w-4" />
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
+          {sorted.map((conversation) => (
+            <ConversationRow
+              key={conversation.id}
+              conversation={conversation}
+              myId={user!.id}
+            />
+          ))}
         </div>
       )}
     </div>

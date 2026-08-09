@@ -271,6 +271,7 @@ export default async function ListingDetailPage({
                         name={req.sender.name}
                         imageUrl={req.sender.imageUrl}
                         size="sm"
+                        userId={req.sender.id}
                       />
                       <div>
                         <p className="text-sm font-medium text-zinc-900">

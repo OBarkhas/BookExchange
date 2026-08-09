@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getDbUser } from "@/lib/auth";
+import { EXCHANGE_LOCKED_STATUSES } from "@/lib/categories";
 import PageHeader from "@/components/ui/PageHeader";
 import BookForm from "@/components/books/BookForm";
 
@@ -13,6 +14,12 @@ export default async function EditListingPage({
 
   if (!book) notFound();
   if (!user || book.userId !== user.id) redirect(`/listings/${id}`);
+
+  const locked = await db.exchangeRequest.findFirst({
+    where: { bookId: id, status: { in: EXCHANGE_LOCKED_STATUSES } },
+    select: { id: true },
+  });
+  if (locked) redirect(`/listings/${id}`);
 
   return (
     <div className="mx-auto max-w-3xl">

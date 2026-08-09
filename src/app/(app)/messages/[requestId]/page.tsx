@@ -11,6 +11,7 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import Avatar from "@/components/ui/Avatar";
 import ChatThread from "@/components/requests/ChatThread";
 import RequestActions from "@/components/requests/RequestActions";
+import DeleteConversationButton from "@/components/requests/DeleteConversationButton";
 
 export default async function MessageThreadPage({
   params,
@@ -90,12 +91,14 @@ export default async function MessageThreadPage({
             name={counterpart.name}
             imageUrl={counterpart.imageUrl}
             size="md"
+            userId={counterpart.id}
           />
           <RequestActions
             requestId={request.id}
             status={request.status}
             isOwner={isOwner}
           />
+          <DeleteConversationButton requestId={request.id} />
         </div>
       </div>
 

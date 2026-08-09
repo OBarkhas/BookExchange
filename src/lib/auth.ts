@@ -1,11 +1,6 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 
-/**
- * Upserts the authenticated Clerk user into the local database.
- * Returns the local User row, or null when there is no authenticated
- * user (or the Clerk account has no email address).
- */
 export async function syncUserFromClerk() {
   const clerkUser = await currentUser();
   if (!clerkUser) return null;
@@ -25,5 +20,4 @@ export async function syncUserFromClerk() {
   });
 }
 
-/** Alias used by route handlers and pages that need the synced user. */
 export const getDbUser = syncUserFromClerk;
