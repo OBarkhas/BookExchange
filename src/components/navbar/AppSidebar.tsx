@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Compass, Repeat, MessageSquare, User } from "lucide-react";
+import { Compass, Repeat, MessageSquare, User, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const sections = [
@@ -24,6 +24,12 @@ const sections = [
     label: "Messages",
     hint: "Swap chats",
     icon: MessageSquare,
+  },
+  {
+    href: "/ai",
+    label: "AI Coach",
+    hint: "Recommendations & Q&A",
+    icon: Sparkles,
   },
   {
     href: "/profile",
