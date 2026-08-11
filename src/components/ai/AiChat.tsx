@@ -1,9 +1,11 @@
 "use client";
 
 import {
+  memo,
   useEffect,
   useRef,
   useState,
+  useTransition,
   type FormEvent,
   type KeyboardEvent,
   type ReactNode,
@@ -109,7 +111,7 @@ function TypingDots() {
   );
 }
 
-function InlineText({ text }: { text: string }) {
+const InlineText = memo(function InlineText({ text }: { text: string }) {
   const tokens = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g);
   return (
     <>
@@ -148,9 +150,9 @@ function InlineText({ text }: { text: string }) {
       })}
     </>
   );
-}
+});
 
-function Markdown({ content }: { content: string }) {
+const Markdown = memo(function Markdown({ content }: { content: string }) {
   const blocks: ReactNode[] = [];
   const list: string[] = [];
   let ordered = false;
@@ -231,7 +233,7 @@ function Markdown({ content }: { content: string }) {
   flush();
 
   return <>{blocks}</>;
-}
+});
 
 function EmptyState({ onPick }: { onPick: (prompt: string) => void }) {
   return (
@@ -274,6 +276,7 @@ function EmptyState({ onPick }: { onPick: (prompt: string) => void }) {
 }
 
 export default function AiChat() {
+  const [, startTransition] = useTransition();
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [activeTitle, setActiveTitle] = useState("Booksy");
@@ -368,10 +371,12 @@ export default function AiChat() {
       if (!res.ok) throw new Error(`Request failed (${res.status})`);
       const data = await res.json();
       if (seq !== loadSeqRef.current) return;
-      setMessages(sanitizeMessages(data?.messages));
-      if (typeof data?.session?.title === "string") {
-        setActiveTitle(data.session.title);
-      }
+      startTransition(() => {
+        setMessages(sanitizeMessages(data?.messages));
+        if (typeof data?.session?.title === "string") {
+          setActiveTitle(data.session.title);
+        }
+      });
     } catch {
       if (seq === loadSeqRef.current) setMessages([]);
     } finally {
@@ -389,21 +394,23 @@ export default function AiChat() {
       const session = data?.session;
       if (!session?.id) throw new Error("Could not start a chat");
 
-      setSessions((previous) => [
-        {
-          id: session.id,
-          title: session.title ?? "New Chat",
-          createdAt: session.createdAt,
-          updatedAt: session.updatedAt,
-          messageCount: 0,
-          lastMessage: null,
-        },
-        ...previous,
-      ]);
-      setActiveSessionId(session.id);
-      setActiveTitle(session.title ?? "New Chat");
-      setMessages([]);
-      setInput("");
+      startTransition(() => {
+        setSessions((previous) => [
+          {
+            id: session.id,
+            title: session.title ?? "New Chat",
+            createdAt: session.createdAt,
+            updatedAt: session.updatedAt,
+            messageCount: 0,
+            lastMessage: null,
+          },
+          ...previous,
+        ]);
+        setActiveSessionId(session.id);
+        setActiveTitle(session.title ?? "New Chat");
+        setMessages([]);
+        setInput("");
+      });
       textareaRef.current?.focus();
     } catch (error) {
       showToast(
@@ -449,19 +456,21 @@ export default function AiChat() {
         const created = data?.session;
         if (!created?.id) throw new Error("Could not start a chat");
         sessionId = created.id;
-        setActiveSessionId(sessionId);
-        setActiveTitle(created.title ?? "New Chat");
-        setSessions((previous) => [
-          {
-            id: created.id,
-            title: created.title ?? "New Chat",
-            createdAt: created.createdAt,
-            updatedAt: created.updatedAt,
-            messageCount: 0,
-            lastMessage: null,
-          },
-          ...previous,
-        ]);
+        startTransition(() => {
+          setActiveSessionId(sessionId);
+          setActiveTitle(created.title ?? "New Chat");
+          setSessions((previous) => [
+            {
+              id: created.id,
+              title: created.title ?? "New Chat",
+              createdAt: created.createdAt,
+              updatedAt: created.updatedAt,
+              messageCount: 0,
+              lastMessage: null,
+            },
+            ...previous,
+          ]);
+        });
       } catch (error) {
         showToast(
           error instanceof Error ? error.message : "Could not start a chat",
@@ -580,7 +589,7 @@ export default function AiChat() {
           New chat
         </button>
       </div>
-      <div className="flex-1 space-y-1 overflow-y-auto px-2 pb-3">
+      <div className="min-h-0 flex-1 space-y-1 overflow-y-auto px-2 pb-3">
         {isLoading ? (
           <div className="flex items-center gap-2 px-2 py-3 text-xs text-stone-400">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
@@ -694,8 +703,8 @@ export default function AiChat() {
   );
 
   return (
-    <div className="relative flex h-[calc(100dvh-16rem)] min-h-[24rem] flex-col overflow-hidden rounded-2xl border border-amber-100 bg-white/80 shadow-sm shadow-amber-900/5 backdrop-blur-sm sm:h-[70vh] sm:min-h-[520px] md:flex-row">
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-amber-100/80 bg-amber-50/40 md:flex">
+    <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden rounded-2xl border border-amber-100 bg-white/80 shadow-sm shadow-amber-900/5 backdrop-blur-sm xl:flex-row">
+      <aside className="hidden w-60 shrink-0 flex-col border-r border-amber-100/80 bg-amber-50/40 xl:flex">
         {renderSidebarContent()}
       </aside>
 
@@ -703,14 +712,14 @@ export default function AiChat() {
         {sidebarOpen && (
           <>
             <motion.div
-              className="absolute inset-0 z-20 bg-zinc-900/30 backdrop-blur-sm md:hidden"
+              className="absolute inset-0 z-20 bg-zinc-900/30 backdrop-blur-sm xl:hidden"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSidebarOpen(false)}
             />
             <motion.aside
-              className="absolute inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-amber-100/80 bg-amber-50/95 backdrop-blur-md md:hidden"
+              className="absolute inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-amber-100/80 bg-amber-50/95 backdrop-blur-md xl:hidden"
               initial={{ x: -260 }}
               animate={{ x: 0 }}
               exit={{ x: -260 }}
@@ -722,13 +731,13 @@ export default function AiChat() {
         )}
       </AnimatePresence>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 min-h-0 flex-1 flex-col">
         <div className="flex items-center gap-2.5 border-b border-amber-100/80 px-4 py-3">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
             aria-label="Open chat list"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-stone-500 transition-colors hover:bg-amber-50 hover:text-amber-700 md:hidden"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-stone-500 transition-colors hover:bg-amber-50 hover:text-amber-700 xl:hidden"
           >
             <PanelLeft className="h-4 w-4" />
           </button>
@@ -754,7 +763,7 @@ export default function AiChat() {
         <div
           ref={scrollRef}
           aria-live="polite"
-          className="flex-1 overflow-y-auto overscroll-contain px-3 py-4 sm:px-6 sm:py-5"
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain scroll-thin px-3 py-4 sm:px-6 sm:py-5"
         >
           {messages.length === 0 ? (
             isLoading || isMessagesLoading ? (
@@ -778,9 +787,9 @@ export default function AiChat() {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.2 }}
-                      className="flex justify-end"
+                      className="flex w-full min-w-0 justify-end"
                     >
-                      <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2.5 text-sm leading-relaxed text-white shadow-sm shadow-amber-500/20">
+                      <div className="max-w-[85%] min-w-0 whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2.5 text-sm leading-relaxed text-white shadow-sm shadow-amber-500/20">
                         {message.content}
                       </div>
                     </motion.div>
@@ -792,9 +801,9 @@ export default function AiChat() {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="flex justify-start"
+                    className="flex w-full min-w-0 justify-start"
                   >
-                    <div className="max-w-[85%] rounded-2xl rounded-bl-md border border-amber-100 bg-white px-4 py-3 text-sm leading-relaxed text-stone-700 shadow-sm">
+                    <div className="max-w-[85%] min-w-0 rounded-2xl rounded-bl-md border border-amber-100 bg-white px-4 py-3 text-sm leading-relaxed text-stone-700 shadow-sm">
                       {message.content ? (
                         <>
                           <Markdown content={message.content} />

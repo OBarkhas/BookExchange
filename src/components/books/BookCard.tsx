@@ -24,7 +24,7 @@ export default function BookCard({ book }: BookCardProps) {
   const forSale = book.price != null;
 
   return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl border border-amber-100 bg-white/90 shadow-sm shadow-amber-900/5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-amber-300 hover:shadow-lg hover:shadow-amber-500/10">
+    <div className="group flex w-full max-w-full flex-col overflow-hidden rounded-2xl border border-amber-100 bg-white/90 shadow-sm shadow-amber-900/5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-amber-300 hover:shadow-lg hover:shadow-amber-500/10 [contain-intrinsic-size:auto_26rem] [content-visibility:auto]">
       <Link
         href={`/listings/${book.id}`}
         className="relative block aspect-[4/3] overflow-hidden bg-gradient-to-br from-amber-100 via-amber-50 to-yellow-100"

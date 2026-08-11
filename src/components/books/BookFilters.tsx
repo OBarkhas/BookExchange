@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { BOOK_CATEGORIES } from "@/lib/categories";
@@ -33,6 +33,7 @@ const emptyFilters: FilterState = {
 export default function BookFilters({ initial, districts }: BookFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const [, startTransition] = useTransition();
   const [filters, setFilters] = useState<FilterState>(initial);
 
   const hasActiveFilters = useMemo(
@@ -56,7 +57,9 @@ export default function BookFilters({ initial, districts }: BookFiltersProps) {
     if (next.district) params.set("district", next.district);
     if (next.sort && next.sort !== "recent") params.set("sort", next.sort);
     const qs = params.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname);
+    startTransition(() => {
+      router.push(qs ? `${pathname}?${qs}` : pathname);
+    });
   };
 
   const set = (key: keyof FilterState, value: string) => {
@@ -78,7 +81,9 @@ export default function BookFilters({ initial, districts }: BookFiltersProps) {
 
   const clearAll = () => {
     setFilters(emptyFilters);
-    router.push(pathname);
+    startTransition(() => {
+      router.push(pathname);
+    });
   };
 
   return (

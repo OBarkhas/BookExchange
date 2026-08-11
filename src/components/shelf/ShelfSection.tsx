@@ -190,9 +190,11 @@ export default function ShelfSection({
               className="group rounded-2xl border border-amber-100 bg-white/85 p-5 shadow-sm shadow-amber-900/5 transition-all duration-300 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md"
             >
               <div className="flex items-start justify-between gap-2">
-                <div>
-                  <h3 className="font-semibold text-zinc-900">{item.title}</h3>
-                  <p className="text-sm text-stone-500">{item.author}</p>
+                <div className="min-w-0">
+                  <h3 className="truncate font-semibold text-zinc-900">
+                    {item.title}
+                  </h3>
+                  <p className="truncate text-sm text-stone-500">{item.author}</p>
                 </div>
                 <button
                   onClick={() => removeShelfItem(item.id)}

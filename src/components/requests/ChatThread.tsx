@@ -123,7 +123,7 @@ export default function ChatThread({
   };
 
   return (
-    <div className="flex h-[calc(100dvh-17rem)] min-h-[22rem] flex-col overflow-hidden rounded-3xl border border-amber-100 bg-white/90 shadow-sm backdrop-blur-sm sm:h-[calc(100vh-16rem)] sm:min-h-[28rem]">
+    <div className="flex h-[calc(100dvh-17rem)] min-h-[22rem] flex-col overflow-hidden rounded-3xl border border-amber-100 bg-white/90 shadow-sm backdrop-blur-sm sm:h-[calc(100vh-14rem)] sm:min-h-[26rem]">
       <div className="flex items-center gap-3 border-b border-amber-50 bg-cream/70 px-4 py-3 sm:px-5 sm:py-3.5">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
           <MessageSquare className="h-4 w-4" />
@@ -136,7 +136,7 @@ export default function ChatThread({
         </div>
       </div>
 
-      <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto scroll-thin px-4 py-4 sm:px-5 sm:py-5">
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
             <MessageSquare className="h-8 w-8 text-amber-200" />
@@ -153,7 +153,7 @@ export default function ChatThread({
             return (
               <div
                 key={message.id}
-                className={`flex items-end gap-2 ${mine ? "flex-row-reverse" : ""}`}
+                className={`flex w-full min-w-0 items-end gap-2 ${mine ? "flex-row-reverse" : ""}`}
               >
                 <Avatar
                   name={message.sender.name}
@@ -163,7 +163,7 @@ export default function ChatThread({
                   className={mine ? "ring-amber-300" : "ring-stone-200"}
                 />
                 <div
-                  className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 shadow-sm sm:max-w-[75%] ${
+                  className={`min-w-0 max-w-[80%] rounded-2xl px-3.5 py-2.5 shadow-sm sm:max-w-[75%] ${
                     mine
                       ? "rounded-br-md bg-gradient-to-br from-amber-500 to-amber-600 text-white"
                       : "rounded-bl-md bg-stone-100 text-zinc-800"

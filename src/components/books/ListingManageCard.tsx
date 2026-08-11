@@ -127,7 +127,7 @@ export default function ListingManageCard({
   );
 
   const actionsBlock = canManage ? (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       {locked && (
         <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-1 text-[11px] font-semibold text-violet-700 ring-1 ring-violet-200">
           <Lock className="h-3 w-3" /> Locked

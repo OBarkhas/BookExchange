@@ -1,5 +1,19 @@
+import dynamic from "next/dynamic";
 import PageHeader from "@/components/ui/PageHeader";
-import BookForm from "@/components/books/BookForm";
+
+const BookForm = dynamic(() => import("@/components/books/BookForm"), {
+  loading: () => (
+    <div className="space-y-4">
+      <div className="h-10 animate-pulse rounded-xl bg-amber-100/40" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="h-10 animate-pulse rounded-xl bg-amber-100/40" />
+        <div className="h-10 animate-pulse rounded-xl bg-amber-100/40" />
+      </div>
+      <div className="h-40 animate-pulse rounded-xl bg-amber-100/40" />
+      <div className="h-10 animate-pulse rounded-xl bg-amber-100/40" />
+    </div>
+  ),
+});
 
 export const metadata = { title: "List a Book — BookLoop" };
 

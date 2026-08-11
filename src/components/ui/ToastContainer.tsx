@@ -92,7 +92,7 @@ export default function ToastContainer() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-[200] flex flex-col gap-2 sm:bottom-6 sm:right-6">
+    <div className="fixed bottom-24 right-4 z-[200] flex w-[calc(100vw-2rem)] max-w-sm flex-col gap-2 sm:bottom-6 sm:right-6 sm:w-auto">
       {toasts.map((toast) => {
         const { box, icon, iconBg, Icon } = typeStyles[toast.type];
         return (

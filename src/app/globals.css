@@ -33,6 +33,34 @@ a,
   touch-action: manipulation;
 }
 
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 767px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 119, 6, 0.35) transparent;
+}
+
+.scroll-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: rgba(217, 119, 6, 0.3);
+  border-radius: 9999px;
+}
+
 @keyframes toast-enter {
   from {
     opacity: 0;
@@ -78,4 +106,15 @@ a,
 
 .animate-blob {
   animation: blob-drift 12s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

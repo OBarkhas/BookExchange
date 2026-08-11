@@ -25,7 +25,7 @@ export default function Topbar({ userId }: { userId: string }) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-amber-100/80 bg-cream/85 backdrop-blur-md">
+    <header className="sticky top-0 z-30 border-b border-amber-100/80 bg-cream/85 pt-[max(env(safe-area-inset-top),0px)] backdrop-blur-md">
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6">
         <Link href="/" className="flex min-w-0 shrink items-center gap-2 sm:gap-2.5">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 shadow-sm shadow-amber-500/25">
