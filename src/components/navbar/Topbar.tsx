@@ -26,27 +26,27 @@ export default function Topbar({ userId }: { userId: string }) {
 
   return (
     <header className="sticky top-0 z-30 border-b border-amber-100/80 bg-cream/85 backdrop-blur-md">
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
-        <Link href="/" className="flex shrink-0 items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 shadow-sm shadow-amber-500/25">
+      <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6">
+        <Link href="/" className="flex min-w-0 shrink items-center gap-2 sm:gap-2.5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 shadow-sm shadow-amber-500/25">
             <BookOpen className="h-4.5 w-4.5 text-white" />
           </div>
-          <span className="text-lg font-bold tracking-tight text-zinc-900">
+          <span className="truncate text-lg font-bold tracking-tight text-zinc-900">
             Book<span className="text-amber-600">Loop</span>
           </span>
         </Link>
 
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
           <Link
             href="/listings/new"
-            className="hidden items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-amber-500/30 transition-all duration-200 hover:from-amber-600 hover:to-amber-700 active:scale-95 sm:flex"
+            className="hidden shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-amber-500/30 transition-all duration-200 hover:from-amber-600 hover:to-amber-700 active:scale-95 sm:flex"
           >
             <Plus className="h-4 w-4" /> List a book
           </Link>
 
           <NotificationBell />
 
-          <div ref={menuRef} className="relative flex items-center">
+          <div ref={menuRef} className="relative flex shrink-0 items-center">
             <Link
               href={`/profile/${userId}`}
               aria-label="Open my profile"

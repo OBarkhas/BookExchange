@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { fetcher } from "@/lib/utils";
@@ -16,6 +16,7 @@ export default function DeleteConversationButton({
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [, startTransition] = useTransition();
 
   const remove = async () => {
     setDeleting(true);
@@ -24,12 +25,14 @@ export default function DeleteConversationButton({
         method: "DELETE",
       });
       setConfirming(false);
-      showToast("Conversation hidden from your messages");
-      router.push("/messages");
-      router.refresh();
+      showToast("Conversation deleted");
+      startTransition(() => {
+        router.push("/messages");
+        router.refresh();
+      });
     } catch (err) {
       showToast(
-        err instanceof Error ? err.message : "Could not remove conversation",
+        err instanceof Error ? err.message : "Could not delete conversation",
         "error",
       );
     } finally {
@@ -43,7 +46,7 @@ export default function DeleteConversationButton({
         onClick={() => setConfirming(true)}
         aria-label="Delete conversation"
         title="Delete conversation"
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-stone-400 transition-colors hover:bg-rose-50 hover:text-rose-500"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-stone-400 transition-colors hover:bg-rose-50 hover:text-rose-500 active:scale-95"
       >
         <Trash2 className="h-4 w-4" />
       </button>
@@ -65,9 +68,9 @@ export default function DeleteConversationButton({
         }
       >
         <p className="text-sm leading-relaxed text-stone-600">
-          This hides the chat from your message list and closes this thread for
-          you. The other reader&apos;s copy stays intact, and the conversation
-          reappears if either of you sends a new message.
+          This permanently deletes the chat from your messages, exchanges and
+          notifications. The other reader&apos;s copy stays intact, and this
+          can&apos;t be undone.
         </p>
       </Modal>
     </>

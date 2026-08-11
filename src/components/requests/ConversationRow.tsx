@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Trash2, ChevronRight } from "lucide-react";
-import { fetcher, timeAgo } from "@/lib/utils";
+import { fetcher, timeAgo, cn } from "@/lib/utils";
 import {
   REQUEST_STATUS_COLORS,
   REQUEST_STATUS_LABELS,
@@ -42,6 +42,8 @@ export default function ConversationRow({
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const [, startTransition] = useTransition();
 
   const counterpart =
     conversation.sender.id === myId
@@ -51,16 +53,18 @@ export default function ConversationRow({
 
   const remove = async () => {
     setDeleting(true);
+    setRemoving(true);
     try {
       await fetcher(`/api/requests/${conversation.id}/conversation`, {
         method: "DELETE",
       });
       setConfirming(false);
-      showToast("Conversation hidden from your messages");
-      router.refresh();
+      showToast("Conversation deleted");
+      startTransition(() => router.refresh());
     } catch (err) {
+      setRemoving(false);
       showToast(
-        err instanceof Error ? err.message : "Could not remove conversation",
+        err instanceof Error ? err.message : "Could not delete conversation",
         "error",
       );
     } finally {
@@ -70,7 +74,12 @@ export default function ConversationRow({
 
   return (
     <>
-      <div className="group flex items-center gap-4 rounded-2xl border border-amber-100 bg-white/85 p-4 shadow-sm shadow-amber-900/5 transition-all duration-300 hover:border-amber-300 hover:shadow-md">
+      <div
+        className={cn(
+          "group flex items-center gap-3 rounded-2xl border border-amber-100 bg-white/85 p-3.5 shadow-sm shadow-amber-900/5 transition-all duration-300 hover:border-amber-300 hover:shadow-md sm:gap-4 sm:p-4",
+          removing && "pointer-events-none opacity-40",
+        )}
+      >
         <Avatar
           name={counterpart.name}
           imageUrl={counterpart.imageUrl}
@@ -111,7 +120,7 @@ export default function ConversationRow({
               onClick={() => setConfirming(true)}
               aria-label="Delete conversation"
               title="Delete conversation"
-              className="rounded-lg p-1.5 text-stone-300 transition-colors hover:bg-rose-50 hover:text-rose-500"
+              className="rounded-lg p-1.5 text-stone-300 transition-colors hover:bg-rose-50 hover:text-rose-500 active:scale-95"
             >
               <Trash2 className="h-4 w-4" />
             </button>
@@ -137,12 +146,12 @@ export default function ConversationRow({
         }
       >
         <p className="text-sm leading-relaxed text-stone-600">
-          This hides the chat with{" "}
+          This permanently removes the chat with{" "}
           <span className="font-semibold text-zinc-900">
             {counterpart.name ?? "this reader"}
           </span>{" "}
-          from your message list. Their copy of the conversation stays intact,
-          and the thread reappears if either of you sends a new message.
+          from your messages and exchanges. Their copy stays intact, and this
+          can&apos;t be undone.
         </p>
       </Modal>
     </>

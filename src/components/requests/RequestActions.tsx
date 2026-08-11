@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, X, CheckCheck, Ban } from "lucide-react";
 import { fetcher } from "@/lib/utils";
@@ -20,6 +20,7 @@ export default function RequestActions({
 }: RequestActionsProps) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
 
   const transition = async (nextStatus: RequestStatus) => {
     setBusy(nextStatus);
@@ -36,7 +37,7 @@ export default function RequestActions({
       } else if (nextStatus === "COMPLETED") {
         showToast("Exchange completed! 🏆");
       }
-      router.refresh();
+      startTransition(() => router.refresh());
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Action failed", "error");
     } finally {

@@ -29,7 +29,9 @@ async function persistMessage(
   });
 }
 
-function toTextStream(source: ReadableStream<Uint8Array>): ReadableStream<Uint8Array> {
+function toTextStream(
+  source: ReadableStream<Uint8Array>,
+): ReadableStream<Uint8Array> {
   const reader = source.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
@@ -91,15 +93,16 @@ export async function POST(req: Request) {
       sessionId?: unknown;
       content?: unknown;
     } | null;
-    const content = typeof body?.content === "string" ? body.content.trim() : "";
+    const content =
+      typeof body?.content === "string" ? body.content.trim() : "";
     if (!content) {
-      return NextResponse.json({ error: "No message provided" }, { status: 400 });
-    }
-    if (content.length > USER_MESSAGE_LIMIT) {
       return NextResponse.json(
-        { error: "Message too long" },
+        { error: "No message provided" },
         { status: 400 },
       );
+    }
+    if (content.length > USER_MESSAGE_LIMIT) {
+      return NextResponse.json({ error: "Message too long" }, { status: 400 });
     }
 
     const sessionId =
@@ -121,7 +124,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
-    // Give placeholder sessions a real title from their first message.
     if (session.title === "New Chat" || session.title === "Chat history") {
       await db.aiChatSession.update({
         where: { id: session.id },
@@ -129,8 +131,6 @@ export async function POST(req: Request) {
       });
     }
 
-    // History is loaded server-side so the client only sends the new message
-    // instead of re-uploading the whole conversation on every turn.
     const history = await db.aiChatMessage.findMany({
       where: { sessionId: session.id },
       orderBy: { createdAt: "desc" },
@@ -149,8 +149,6 @@ export async function POST(req: Request) {
 
     await persistMessage(user.id, session.id, "user", content);
 
-    // Touch recency now (not only in the stream flush) so the session list
-    // reorders correctly even if the stream is aborted mid-reply.
     await db.aiChatSession.update({
       where: { id: session.id },
       data: { updatedAt: new Date() },
@@ -171,8 +169,13 @@ export async function POST(req: Request) {
       async flush() {
         assistantContent += decoder.decode();
         try {
-          await persistMessage(user.id, session.id, "assistant", assistantContent);
-          // Keep the session list sorted by recency.
+          await persistMessage(
+            user.id,
+            session.id,
+            "assistant",
+            assistantContent,
+          );
+
           await db.aiChatSession.update({
             where: { id: session.id },
             data: { updatedAt: new Date() },
@@ -192,7 +195,8 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("[api/ai/chat] failed:", error);
-    const message = error instanceof Error ? error.message : "Internal server error";
+    const message =
+      error instanceof Error ? error.message : "Internal server error";
     const expose = /GROQ_API_KEY|Groq API error/.test(message)
       ? message
       : "Internal server error";

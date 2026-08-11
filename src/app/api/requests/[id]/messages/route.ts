@@ -8,6 +8,18 @@ const isParticipant = (
   userId: string,
 ) => request.senderId === userId || request.receiverId === userId;
 
+const isHiddenFor = (
+  request: {
+    senderId: string;
+    receiverId: string;
+    hiddenBySender: boolean;
+    hiddenByReceiver: boolean;
+  },
+  userId: string,
+) =>
+  (request.senderId === userId && request.hiddenBySender) ||
+  (request.receiverId === userId && request.hiddenByReceiver);
+
 export async function GET(
   _req: Request,
   { params }: RouteContext<"/api/requests/[id]/messages">,
@@ -21,13 +33,24 @@ export async function GET(
     const { id } = await params;
     const request = await db.exchangeRequest.findUnique({
       where: { id },
-      select: { senderId: true, receiverId: true },
+      select: {
+        senderId: true,
+        receiverId: true,
+        hiddenBySender: true,
+        hiddenByReceiver: true,
+      },
     });
     if (!request) {
       return NextResponse.json({ error: "Request not found" }, { status: 404 });
     }
     if (!isParticipant(request, user.id)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    if (isHiddenFor(request, user.id)) {
+      return NextResponse.json(
+        { error: "Conversation deleted" },
+        { status: 404 },
+      );
     }
 
     const messages = await db.message.findMany({
@@ -61,7 +84,12 @@ export async function POST(
     const { id } = await params;
     const request = await db.exchangeRequest.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        senderId: true,
+        receiverId: true,
+        hiddenBySender: true,
+        hiddenByReceiver: true,
         book: { select: { title: true } },
       },
     });
@@ -70,6 +98,12 @@ export async function POST(
     }
     if (!isParticipant(request, user.id)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    if (isHiddenFor(request, user.id)) {
+      return NextResponse.json(
+        { error: "Conversation deleted" },
+        { status: 404 },
+      );
     }
 
     const body = await req.json().catch(() => null);
@@ -82,30 +116,27 @@ export async function POST(
       );
     }
 
-    await db.exchangeRequest.update({
-      where: { id },
-      data: { hiddenBySender: false, hiddenByReceiver: false },
-    });
-
-    const message = await db.message.create({
-      data: {
-        content: content.slice(0, 2000),
-        requestId: id,
-        senderId: user.id,
-      },
-      include: {
-        sender: { select: { id: true, name: true, imageUrl: true } },
-      },
-    });
-
     const counterpartId =
       user.id === request.senderId ? request.receiverId : request.senderId;
-    await createNotification(
-      counterpartId,
-      "New message 💬",
-      `${user.name ?? "Someone"} sent you a message about "${request.book.title}".`,
-      `/messages/${request.id}`,
-    );
+
+    const [message] = await Promise.all([
+      db.message.create({
+        data: {
+          content: content.slice(0, 2000),
+          requestId: id,
+          senderId: user.id,
+        },
+        include: {
+          sender: { select: { id: true, name: true, imageUrl: true } },
+        },
+      }),
+      createNotification(
+        counterpartId,
+        "New message 💬",
+        `${user.name ?? "Someone"} sent you a message about "${request.book.title}".`,
+        `/messages/${request.id}`,
+      ),
+    ]);
 
     return NextResponse.json({ message }, { status: 201 });
   } catch (error) {

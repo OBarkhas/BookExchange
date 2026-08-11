@@ -3,10 +3,23 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Compass, Repeat, MessageSquare, User, Sparkles } from "lucide-react";
+import {
+  Compass,
+  Repeat,
+  MessageSquare,
+  User,
+  Sparkles,
+  LayoutDashboard,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const sections = [
+  {
+    href: "/",
+    label: "Dashboard",
+    hint: "Overview & activity",
+    icon: LayoutDashboard,
+  },
   {
     href: "/browse",
     label: "Browse",
@@ -40,8 +53,9 @@ const sections = [
 ];
 
 function isSectionActive(pathname: string, href: string) {
+  if (href === "/") return pathname === "/";
   if (href === "/profile") return pathname.startsWith("/profile/");
-  if (href === "/browse") return pathname === "/" || pathname.startsWith("/browse");
+  if (href === "/browse") return pathname.startsWith("/browse");
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -113,10 +127,10 @@ export default function AppSidebar({ userId }: { userId: string }) {
       </aside>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 w-full border-t border-amber-100/80 bg-cream/95 pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] shadow-[0_-4px_20px_-8px_rgba(120,53,15,0.12)] backdrop-blur-md lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 w-full border-t border-amber-100/80 bg-cream/95 pb-[max(env(safe-area-inset-bottom),0.375rem)] pl-[max(env(safe-area-inset-left),0.5rem)] pr-[max(env(safe-area-inset-right),0.5rem)] shadow-[0_-4px_20px_-8px_rgba(120,53,15,0.12)] backdrop-blur-md lg:hidden"
         aria-label="Primary"
       >
-        <div className="mx-auto flex max-w-lg items-stretch justify-around px-2 py-1.5">
+        <div className="mx-auto flex w-full max-w-lg items-stretch justify-around gap-1 px-1 py-1.5">
           {sections.map((section) => {
             const active = isSectionActive(pathname, section.href);
             const href =

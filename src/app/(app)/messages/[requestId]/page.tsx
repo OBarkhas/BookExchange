@@ -39,13 +39,18 @@ export default async function MessageThreadPage({
     notFound();
   }
 
+  const hiddenForMe =
+    (request.sender.id === user!.id && request.hiddenBySender) ||
+    (request.receiver.id === user!.id && request.hiddenByReceiver);
+  if (hiddenForMe) notFound();
+
   const counterpart =
     request.sender.id === user!.id ? request.receiver : request.sender;
   const isOwner = request.receiver.id === user!.id;
   const cover = request.book.images[0];
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto w-full max-w-3xl">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <Link
           href="/messages"
@@ -59,12 +64,12 @@ export default async function MessageThreadPage({
         />
       </div>
 
-      <div className="mb-5 flex flex-wrap items-center gap-4 rounded-2xl border border-amber-100 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
+      <div className="mb-5 flex flex-col gap-4 rounded-2xl border border-amber-100 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:flex-row sm:items-center">
         <Link
           href={`/listings/${request.book.id}`}
-          className="flex items-center gap-3"
+          className="flex min-w-0 items-center gap-3"
         >
-          <div className="h-14 w-11 overflow-hidden rounded-lg bg-gradient-to-br from-amber-100 to-yellow-100">
+          <div className="h-14 w-11 shrink-0 overflow-hidden rounded-lg bg-gradient-to-br from-amber-100 to-yellow-100">
             {cover ? (
               <img
                 src={cover}
@@ -77,16 +82,16 @@ export default async function MessageThreadPage({
               </div>
             )}
           </div>
-          <div>
-            <p className="text-sm font-semibold text-zinc-900">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-zinc-900">
               {request.book.title}
             </p>
-            <p className="text-xs text-stone-400">
+            <p className="truncate text-xs text-stone-400">
               chatting with {counterpart.name ?? "book lover"}
             </p>
           </div>
         </Link>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 sm:ml-auto">
           <Avatar
             name={counterpart.name}
             imageUrl={counterpart.imageUrl}

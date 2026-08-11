@@ -38,7 +38,10 @@ export async function GET() {
     });
   } catch (error) {
     console.error("[api/ai/chat/sessions] GET failed:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
@@ -49,8 +52,6 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Tidy up: remove any empty placeholder chats so "New Chat" clicks don't
-    // pile up unused rows.
     const empties = await db.aiChatSession.findMany({
       where: { userId: user.id, messages: { none: {} } },
       select: { id: true },
@@ -69,6 +70,9 @@ export async function POST() {
     return NextResponse.json({ session }, { status: 201 });
   } catch (error) {
     console.error("[api/ai/chat/sessions] POST failed:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

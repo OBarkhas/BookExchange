@@ -694,7 +694,7 @@ export default function AiChat() {
   );
 
   return (
-    <div className="relative flex h-[70vh] min-h-[520px] flex-col overflow-hidden rounded-2xl border border-amber-100 bg-white/80 shadow-sm shadow-amber-900/5 backdrop-blur-sm md:flex-row">
+    <div className="relative flex h-[calc(100dvh-16rem)] min-h-[24rem] flex-col overflow-hidden rounded-2xl border border-amber-100 bg-white/80 shadow-sm shadow-amber-900/5 backdrop-blur-sm sm:h-[70vh] sm:min-h-[520px] md:flex-row">
       <aside className="hidden w-60 shrink-0 flex-col border-r border-amber-100/80 bg-amber-50/40 md:flex">
         {renderSidebarContent()}
       </aside>
@@ -754,7 +754,7 @@ export default function AiChat() {
         <div
           ref={scrollRef}
           aria-live="polite"
-          className="flex-1 overflow-y-auto px-4 py-5 sm:px-6"
+          className="flex-1 overflow-y-auto overscroll-contain px-3 py-4 sm:px-6 sm:py-5"
         >
           {messages.length === 0 ? (
             isLoading || isMessagesLoading ? (
@@ -816,7 +816,7 @@ export default function AiChat() {
           )}
         </div>
 
-        <div className="border-t border-amber-100/80 p-3 sm:p-4">
+        <div className="border-t border-amber-100/80 p-2.5 sm:p-4">
           <form onSubmit={handleSubmit} className="flex items-end gap-2">
             <textarea
               ref={textareaRef}
@@ -830,7 +830,7 @@ export default function AiChat() {
                   ? "Loading conversation…"
                   : "Ask about books, your shelf, or reading time…"
               }
-              className="max-h-40 min-h-[44px] flex-1 resize-none rounded-xl border border-amber-200 bg-cream/70 px-3.5 py-2.5 text-sm text-zinc-900 placeholder:text-stone-400 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
+              className="max-h-40 min-h-[44px] w-full min-w-0 flex-1 resize-none rounded-xl border border-amber-200 bg-cream/70 px-3.5 py-2.5 text-sm text-zinc-900 placeholder:text-stone-400 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
             />
             {isStreaming ? (
               <button

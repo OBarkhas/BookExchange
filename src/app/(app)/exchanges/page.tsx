@@ -45,30 +45,46 @@ export default async function ExchangesPage({
   const tab: ExchangeTab =
     rawTab === "received" || rawTab === "listings" ? rawTab : "sent";
   const user = await getDbUser();
+  const userId = user!.id;
+  const activeBookWhere = { userId, expiresAt: { gt: new Date() } };
 
-  const [sent, received, listings] = await Promise.all([
-    db.exchangeRequest.findMany({
-      where: { senderId: user!.id },
-      orderBy: { createdAt: "desc" },
-      include: requestIncludes,
-    }),
-    db.exchangeRequest.findMany({
-      where: { receiverId: user!.id },
-      orderBy: { createdAt: "desc" },
-      include: requestIncludes,
-    }),
-    db.book.findMany({
-      where: { userId: user!.id, expiresAt: { gt: new Date() } },
-      orderBy: { lastBumpedAt: "desc" },
-      include: {
-        requests: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-          select: { status: true },
-        },
-      },
-    }),
-  ]);
+  const [sent, received, listings, sentCount, receivedCount, listingsCount] =
+    await Promise.all([
+      tab === "sent"
+        ? db.exchangeRequest.findMany({
+            where: { senderId: userId, hiddenBySender: false },
+            orderBy: { createdAt: "desc" },
+            include: requestIncludes,
+          })
+        : Promise.resolve<RequestCardData[]>([]),
+      tab === "received"
+        ? db.exchangeRequest.findMany({
+            where: { receiverId: userId, hiddenByReceiver: false },
+            orderBy: { createdAt: "desc" },
+            include: requestIncludes,
+          })
+        : Promise.resolve<RequestCardData[]>([]),
+      tab === "listings"
+        ? db.book.findMany({
+            where: activeBookWhere,
+            orderBy: { lastBumpedAt: "desc" },
+            include: {
+              requests: {
+                orderBy: { createdAt: "desc" },
+                take: 1,
+                select: { status: true },
+              },
+            },
+          })
+        : Promise.resolve<ManageListing[]>([]),
+      db.exchangeRequest.count({
+        where: { senderId: userId, hiddenBySender: false },
+      }),
+      db.exchangeRequest.count({
+        where: { receiverId: userId, hiddenByReceiver: false },
+      }),
+      db.book.count({ where: activeBookWhere }),
+    ]);
 
   return (
     <div>
@@ -87,19 +103,19 @@ export default async function ExchangesPage({
             value: "sent",
             label: "Sent",
             iconName: "sent",
-            count: sent.length,
+            count: sentCount,
           },
           {
             value: "received",
             label: "Received",
             iconName: "received",
-            count: received.length,
+            count: receivedCount,
           },
           {
             value: "listings",
             label: "My listings",
             iconName: "listings",
-            count: listings.length,
+            count: listingsCount,
           },
         ]}
       />

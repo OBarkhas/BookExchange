@@ -18,10 +18,9 @@ export default function AppShell({
 
       <AppSidebar userId={userId} />
 
-      <div className="flex min-h-screen flex-col lg:pl-64">
+      <div className="flex min-h-screen min-w-0 flex-col overflow-x-clip lg:pl-64">
         <Topbar userId={userId} />
-        {}
-        <main className="relative z-10 mx-auto w-full max-w-6xl flex-1 px-4 py-8 pb-28 sm:px-6 lg:pb-12">
+        <main className="relative z-10 mx-auto w-full min-w-0 max-w-6xl flex-1 px-4 py-8 pb-36 sm:px-6 lg:pb-12">
           {children}
         </main>
       </div>

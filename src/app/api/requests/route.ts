@@ -13,8 +13,8 @@ export async function GET(req: NextRequest) {
     const type = req.nextUrl.searchParams.get("type");
     const isReceived = type === "received";
     const where = isReceived
-      ? { receiverId: user.id }
-      : { senderId: user.id };
+      ? { receiverId: user.id, hiddenByReceiver: false }
+      : { senderId: user.id, hiddenBySender: false };
 
     const requests = await db.exchangeRequest.findMany({
       where,

@@ -47,6 +47,16 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const hiddenForMe =
+      (request.senderId === user.id && request.hiddenBySender) ||
+      (request.receiverId === user.id && request.hiddenByReceiver);
+    if (hiddenForMe) {
+      return NextResponse.json(
+        { error: "Conversation deleted" },
+        { status: 404 },
+      );
+    }
+
     return NextResponse.json({ request });
   } catch (error) {
     console.error("[api/requests/:id] GET failed:", error);
