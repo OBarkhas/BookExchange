@@ -85,6 +85,52 @@ function formatLine(label: string, rows: Array<Array<string | null>>): string {
   return `${label}\n${lines.join("\n")}`;
 }
 
+// In-memory TTL cache for the library context. Building the context runs 4
+// DB queries per request; for typical chat sessions (a few messages in a row)
+// the data barely changes, so caching it for a short window avoids the repeat
+// round-trips while still picking up new listings/shelf edits quickly.
+const CONTEXT_CACHE_TTL_MS = 60_000;
+const CONTEXT_CACHE_MAX_SIZE = 100;
+
+const contextCache = new Map<
+  string,
+  { data: LibraryContext; expiresAt: number }
+>();
+const inflightContext = new Map<string, Promise<LibraryContext>>();
+
+function pruneContextCache(now: number) {
+  if (contextCache.size <= CONTEXT_CACHE_MAX_SIZE) return;
+  for (const [key, entry] of contextCache) {
+    if (entry.expiresAt <= now) contextCache.delete(key);
+  }
+}
+
+export async function getLibraryContextCached(
+  userId: string,
+): Promise<LibraryContext> {
+  const now = Date.now();
+  const cached = contextCache.get(userId);
+  if (cached && cached.expiresAt > now) return cached.data;
+
+  pruneContextCache(now);
+
+  // De-duplicate concurrent misses so a single expiry doesn't stampede the
+  // database with 4 parallel queries per in-flight request.
+  const pending = inflightContext.get(userId);
+  if (pending) return pending;
+
+  const promise = fetchLibraryContext(userId).then((data) => {
+    contextCache.set(userId, {
+      data,
+      expiresAt: Date.now() + CONTEXT_CACHE_TTL_MS,
+    });
+    inflightContext.delete(userId);
+    return data;
+  });
+  inflightContext.set(userId, promise);
+  return promise;
+}
+
 export function buildSystemPrompt(context: LibraryContext): string {
   const today = new Date().toISOString().slice(0, 10);
 

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getDbUser } from "@/lib/auth";
 import {
-  fetchLibraryContext,
+  getLibraryContextCached,
   buildSystemPrompt,
   streamGroqChat,
   type ChatMessage,
@@ -10,12 +10,14 @@ import {
 
 const encoder = new TextEncoder();
 
-const HISTORY_LIMIT = 50;
+const LLM_HISTORY_LIMIT = 12;
 const USER_MESSAGE_LIMIT = 8000;
 const ASSISTANT_MESSAGE_LIMIT = 20000;
+const TITLE_LIMIT = 40;
 
 async function persistMessage(
   userId: string,
+  sessionId: string,
   role: "user" | "assistant",
   content: string,
 ) {
@@ -23,7 +25,7 @@ async function persistMessage(
   if (!trimmed) return;
   const limit = role === "user" ? USER_MESSAGE_LIMIT : ASSISTANT_MESSAGE_LIMIT;
   await db.aiChatMessage.create({
-    data: { userId, role, content: trimmed.slice(0, limit) },
+    data: { userId, sessionId, role, content: trimmed.slice(0, limit) },
   });
 }
 
@@ -78,28 +80,6 @@ function toTextStream(source: ReadableStream<Uint8Array>): ReadableStream<Uint8A
   });
 }
 
-export async function GET() {
-  try {
-    const user = await getDbUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const messages = await db.aiChatMessage.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" },
-      take: HISTORY_LIMIT,
-      select: { id: true, role: true, content: true, createdAt: true },
-    });
-    messages.reverse();
-
-    return NextResponse.json({ messages });
-  } catch (error) {
-    console.error("[api/ai/chat] GET failed:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
-
 export async function POST(req: Request) {
   try {
     const user = await getDbUser();
@@ -108,37 +88,75 @@ export async function POST(req: Request) {
     }
 
     const body = (await req.json().catch(() => null)) as {
-      messages?: unknown;
+      sessionId?: unknown;
+      content?: unknown;
     } | null;
-    const rawMessages = Array.isArray(body?.messages)
-      ? (body.messages as ChatMessage[])
-      : [];
-
-    const messages: ChatMessage[] = rawMessages
-      .filter(
-        (message): message is ChatMessage =>
-          message != null &&
-          typeof message === "object" &&
-          (message.role === "user" || message.role === "assistant") &&
-          typeof message.content === "string" &&
-          message.content.trim().length > 0,
-      )
-      .map((message) => ({
-        role: message.role,
-        content: message.content.trim(),
-      }))
-      .slice(-12);
-
-    if (messages.length === 0) {
+    const content = typeof body?.content === "string" ? body.content.trim() : "";
+    if (!content) {
       return NextResponse.json({ error: "No message provided" }, { status: 400 });
     }
-
-    const lastMessage = messages[messages.length - 1];
-    if (lastMessage.role === "user") {
-      await persistMessage(user.id, "user", lastMessage.content);
+    if (content.length > USER_MESSAGE_LIMIT) {
+      return NextResponse.json(
+        { error: "Message too long" },
+        { status: 400 },
+      );
     }
 
-    const context = await fetchLibraryContext(user.id);
+    const sessionId =
+      typeof body?.sessionId === "string" ? body.sessionId.trim() : "";
+
+    let session: { id: string; title: string } | null = null;
+    if (sessionId) {
+      session = await db.aiChatSession.findFirst({
+        where: { id: sessionId, userId: user.id },
+        select: { id: true, title: true },
+      });
+    } else {
+      session = await db.aiChatSession.create({
+        data: { userId: user.id, title: content.slice(0, TITLE_LIMIT) },
+        select: { id: true, title: true },
+      });
+    }
+    if (!session) {
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    }
+
+    // Give placeholder sessions a real title from their first message.
+    if (session.title === "New Chat" || session.title === "Chat history") {
+      await db.aiChatSession.update({
+        where: { id: session.id },
+        data: { title: content.slice(0, TITLE_LIMIT) },
+      });
+    }
+
+    // History is loaded server-side so the client only sends the new message
+    // instead of re-uploading the whole conversation on every turn.
+    const history = await db.aiChatMessage.findMany({
+      where: { sessionId: session.id },
+      orderBy: { createdAt: "desc" },
+      take: LLM_HISTORY_LIMIT,
+      select: { role: true, content: true },
+    });
+    history.reverse();
+
+    const messages: ChatMessage[] = [
+      ...history.map((message) => ({
+        role: message.role as ChatMessage["role"],
+        content: message.content,
+      })),
+      { role: "user", content },
+    ];
+
+    await persistMessage(user.id, session.id, "user", content);
+
+    // Touch recency now (not only in the stream flush) so the session list
+    // reorders correctly even if the stream is aborted mid-reply.
+    await db.aiChatSession.update({
+      where: { id: session.id },
+      data: { updatedAt: new Date() },
+    });
+
+    const context = await getLibraryContextCached(user.id);
     const systemPrompt = buildSystemPrompt(context);
     const source = await streamGroqChat(messages, systemPrompt);
     const parsed = toTextStream(source);
@@ -153,7 +171,12 @@ export async function POST(req: Request) {
       async flush() {
         assistantContent += decoder.decode();
         try {
-          await persistMessage(user.id, "assistant", assistantContent);
+          await persistMessage(user.id, session.id, "assistant", assistantContent);
+          // Keep the session list sorted by recency.
+          await db.aiChatSession.update({
+            where: { id: session.id },
+            data: { updatedAt: new Date() },
+          });
         } catch {
           console.error("[api/ai/chat] failed to persist assistant message");
         }

@@ -55,6 +55,7 @@ model User {
   eventAttendees   EventAttendee[]
   notifications    Notification[]
   aiMessages       AiChatMessage[]
+  aiChatSessions   AiChatSession[]
 }
 
 model Book {
@@ -215,11 +216,30 @@ model Notification {
   createdAt DateTime @default(now())
 }
 
+model AiChatSession {
+  id        String          @id @default(cuid())
+  title     String          @default("New Chat")
+  userId    String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  messages AiChatMessage[]
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, updatedAt])
+}
+
 model AiChatMessage {
   id        String   @id @default(cuid())
   userId    String
+  sessionId String
   role      String
   content   String
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session AiChatSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+  @@index([userId])
 }
