@@ -236,11 +236,45 @@ export default function AiChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
   const stoppedRef = useRef(false);
   const messageIdRef = useRef(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch("/api/ai/chat")
+      .then((response) => {
+        if (!response.ok) throw new Error(`Request failed (${response.status})`);
+        return response.json();
+      })
+      .then((data: { messages?: unknown }) => {
+        if (cancelled) return;
+        const history: ChatMessage[] = Array.isArray(data?.messages)
+          ? data.messages.filter(
+              (message): message is ChatMessage =>
+                message != null &&
+                typeof message === "object" &&
+                typeof message.id === "string" &&
+                (message.role === "user" || message.role === "assistant") &&
+                typeof message.content === "string" &&
+                message.content.length > 0,
+            )
+          : [];
+        setMessages(history);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setIsHistoryLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -257,7 +291,7 @@ export default function AiChat() {
 
   async function send(prompt?: string) {
     const content = (prompt ?? input).trim();
-    if (!content || isStreaming) return;
+    if (!content || isStreaming || isHistoryLoading) return;
 
     const userMessage: ChatMessage = {
       id: `user-${messageIdRef.current++}`,
@@ -372,7 +406,16 @@ export default function AiChat() {
 
       <div ref={scrollRef} aria-live="polite" className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
         {messages.length === 0 ? (
-          <EmptyState onPick={(prompt) => void send(prompt)} />
+          isHistoryLoading ? (
+            <div className="flex h-full items-center justify-center">
+              <span className="flex items-center gap-2 text-sm text-stone-400">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
+                Loading your conversation…
+              </span>
+            </div>
+          ) : (
+            <EmptyState onPick={(prompt) => void send(prompt)} />
+          )
         ) : (
           <div className="space-y-4">
             {messages.map((message) => {
@@ -429,8 +472,13 @@ export default function AiChat() {
             value={input}
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={handleKeyDown}
+            disabled={isHistoryLoading}
             rows={1}
-            placeholder="Ask about books, your shelf, or reading time…"
+            placeholder={
+              isHistoryLoading
+                ? "Loading your conversation…"
+                : "Ask about books, your shelf, or reading time…"
+            }
             className="max-h-40 min-h-[44px] flex-1 resize-none rounded-xl border border-amber-200 bg-cream/70 px-3.5 py-2.5 text-sm text-zinc-900 placeholder:text-stone-400 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
           />
           {isStreaming ? (
@@ -445,11 +493,11 @@ export default function AiChat() {
           ) : (
             <button
               type="submit"
-              disabled={!input.trim()}
+              disabled={!input.trim() || isHistoryLoading}
               aria-label="Send message"
               className={cn(
                 "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white shadow-sm transition-all duration-200 active:scale-95",
-                input.trim()
+                input.trim() && !isHistoryLoading
                   ? "bg-gradient-to-r from-amber-500 to-amber-600 shadow-amber-500/30 hover:from-amber-600 hover:to-amber-700"
                   : "cursor-not-allowed bg-stone-300 shadow-none",
               )}

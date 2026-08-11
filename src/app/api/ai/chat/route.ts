@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
 import { getDbUser } from "@/lib/auth";
 import {
   fetchLibraryContext,
@@ -8,6 +9,23 @@ import {
 } from "@/lib/groq";
 
 const encoder = new TextEncoder();
+
+const HISTORY_LIMIT = 50;
+const USER_MESSAGE_LIMIT = 8000;
+const ASSISTANT_MESSAGE_LIMIT = 20000;
+
+async function persistMessage(
+  userId: string,
+  role: "user" | "assistant",
+  content: string,
+) {
+  const trimmed = content.trim();
+  if (!trimmed) return;
+  const limit = role === "user" ? USER_MESSAGE_LIMIT : ASSISTANT_MESSAGE_LIMIT;
+  await db.aiChatMessage.create({
+    data: { userId, role, content: trimmed.slice(0, limit) },
+  });
+}
 
 function toTextStream(source: ReadableStream<Uint8Array>): ReadableStream<Uint8Array> {
   const reader = source.getReader();
@@ -60,6 +78,28 @@ function toTextStream(source: ReadableStream<Uint8Array>): ReadableStream<Uint8A
   });
 }
 
+export async function GET() {
+  try {
+    const user = await getDbUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const messages = await db.aiChatMessage.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: HISTORY_LIMIT,
+      select: { id: true, role: true, content: true, createdAt: true },
+    });
+    messages.reverse();
+
+    return NextResponse.json({ messages });
+  } catch (error) {
+    console.error("[api/ai/chat] GET failed:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const user = await getDbUser();
@@ -93,11 +133,34 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No message provided" }, { status: 400 });
     }
 
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage.role === "user") {
+      await persistMessage(user.id, "user", lastMessage.content);
+    }
+
     const context = await fetchLibraryContext(user.id);
     const systemPrompt = buildSystemPrompt(context);
     const source = await streamGroqChat(messages, systemPrompt);
+    const parsed = toTextStream(source);
 
-    return new Response(toTextStream(source), {
+    const decoder = new TextDecoder();
+    let assistantContent = "";
+    const persistingStream = new TransformStream<Uint8Array, Uint8Array>({
+      transform(chunk, controller) {
+        assistantContent += decoder.decode(chunk, { stream: true });
+        controller.enqueue(chunk);
+      },
+      async flush() {
+        assistantContent += decoder.decode();
+        try {
+          await persistMessage(user.id, "assistant", assistantContent);
+        } catch {
+          console.error("[api/ai/chat] failed to persist assistant message");
+        }
+      },
+    });
+
+    return new Response(parsed.pipeThrough(persistingStream), {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
         "Cache-Control": "no-cache, no-transform",

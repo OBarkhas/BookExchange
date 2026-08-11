@@ -54,35 +54,36 @@ model User {
   eventsCreated    Event[]           @relation("EventsCreated")
   eventAttendees   EventAttendee[]
   notifications    Notification[]
+  aiMessages       AiChatMessage[]
 }
 
 model Book {
-  id                 String        @id @default(cuid())
-  title              String
-  author             String
-  category           String
-  condition          BookCondition @default(GOOD)
-  
-  hasDamage          Boolean       @default(false)
-  damageDescription  String?
-  images             String[]
+  id        String        @id @default(cuid())
+  title     String
+  author    String
+  category  String
+  condition BookCondition @default(GOOD)
 
-  listingType        ListingType   @default(BOTH)
+  hasDamage         Boolean  @default(false)
+  damageDescription String?
+  images            String[]
+
+  listingType        ListingType @default(BOTH)
   price              Float?
   exchangePreference String?
   description        String?
-  isAvailable        Boolean       @default(true)
-  
-  expiresAt          DateTime
-  lastBumpedAt       DateTime      @default(now())
+  isAvailable        Boolean     @default(true)
 
-  userId             String
-  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt    DateTime
+  lastBumpedAt DateTime @default(now())
 
-  requests           ExchangeRequest[]
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  requests ExchangeRequest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model ExchangeRequest {
@@ -91,71 +92,71 @@ model ExchangeRequest {
   offeredBook String?
   status      RequestStatus @default(PENDING)
 
-  bookId      String
-  book        Book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  bookId String
+  book   Book   @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
-  senderId    String
-  sender      User          @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId String
+  sender   User   @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
 
-  receiverId  String
-  receiver    User          @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User   @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
 
-  messages    Message[]
-  createdAt   DateTime      @default(now())
+  messages  Message[]
+  createdAt DateTime  @default(now())
 
-  hiddenBySender   Boolean     @default(false)
-  hiddenByReceiver Boolean     @default(false)
+  hiddenBySender   Boolean @default(false)
+  hiddenByReceiver Boolean @default(false)
 }
 
 model Message {
-  id        String          @id @default(cuid())
-  content   String
+  id      String @id @default(cuid())
+  content String
 
   requestId String
   request   ExchangeRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
 
-  senderId  String
-  sender    User            @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  senderId String
+  sender   User   @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime        @default(now())
+  createdAt DateTime @default(now())
 }
 
 model UserBookShelf {
-  id        String      @id @default(cuid())
-  title     String
-  author    String
-  status    ShelfStatus @default(COMPLETED)
-  rating    Int?
+  id     String      @id @default(cuid())
+  title  String
+  author String
+  status ShelfStatus @default(COMPLETED)
+  rating Int?
 
-  userId    String
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime    @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Wishlist {
-  id        String   @id @default(cuid())
-  title     String
-  author    String?
+  id     String  @id @default(cuid())
+  title  String
+  author String?
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 }
 
 model Review {
-  id         String   @id @default(cuid())
-  rating     Int
-  comment    String?
+  id      String  @id @default(cuid())
+  rating  Int
+  comment String?
 
   reviewerId String
-  reviewer   User     @relation("ReviewsGiven", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewer   User   @relation("ReviewsGiven", fields: [reviewerId], references: [id], onDelete: Cascade)
 
   receiverId String
-  receiver   User     @relation("ReviewsReceived", fields: [receiverId], references: [id], onDelete: Cascade)
+  receiver   User   @relation("ReviewsReceived", fields: [receiverId], references: [id], onDelete: Cascade)
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([reviewerId, receiverId])
 }
@@ -168,20 +169,20 @@ model Event {
   eventDate   DateTime
 
   organizerId String
-  organizer   User     @relation("EventsCreated", fields: [organizerId], references: [id], onDelete: Cascade)
+  organizer   User   @relation("EventsCreated", fields: [organizerId], references: [id], onDelete: Cascade)
 
-  attendees   EventAttendee[]
-  createdAt   DateTime @default(now())
+  attendees EventAttendee[]
+  createdAt DateTime        @default(now())
 }
 
 model EventAttendee {
-  id        String   @id @default(cuid())
-  
-  eventId   String
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  id String @id @default(cuid())
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
@@ -189,12 +190,12 @@ model EventAttendee {
 }
 
 model UserBadge {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   badgeName String
   icon      String?
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   awardedAt DateTime @default(now())
 
@@ -202,14 +203,23 @@ model UserBadge {
 }
 
 model Notification {
-  id        String   @id @default(cuid())
-  title     String
-  message   String
-  isRead    Boolean  @default(false)
-  link      String?
+  id      String  @id @default(cuid())
+  title   String
+  message String
+  isRead  Boolean @default(false)
+  link    String?
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
+}
+
+model AiChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
