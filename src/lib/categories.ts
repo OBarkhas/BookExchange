@@ -67,3 +67,31 @@ export const LISTING_TYPE_COLORS: Record<ListingType, string> = {
   SELL_ONLY: "bg-orange-50 text-orange-700 ring-orange-200",
   BOTH: "bg-indigo-50 text-indigo-700 ring-indigo-200",
 };
+
+export const POST_KINDS = ["REQUEST", "DISCUSSION", "RECOMMENDATION"] as const;
+
+export type PostKind = (typeof POST_KINDS)[number];
+
+export const POST_KIND_LABELS: Record<PostKind, string> = {
+  REQUEST: "Community Request",
+  DISCUSSION: "Discussion",
+  RECOMMENDATION: "Recommendation",
+};
+
+export const POST_KIND_COLORS: Record<PostKind, string> = {
+  REQUEST: "bg-violet-50 text-violet-700 ring-violet-200",
+  DISCUSSION: "bg-sky-50 text-sky-700 ring-sky-200",
+  RECOMMENDATION: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+};
+
+export const FEED_BOOK_LABELS: Record<ListingType, string> = {
+  SELL_ONLY: "Selling",
+  EXCHANGE_ONLY: "Exchange",
+  BOTH: "Swap or sell",
+};
+
+export const FEED_BOOK_COLORS: Record<ListingType, string> = {
+  SELL_ONLY: "bg-orange-50 text-orange-700 ring-orange-200",
+  EXCHANGE_ONLY: "bg-teal-50 text-teal-700 ring-teal-200",
+  BOTH: "bg-indigo-50 text-indigo-700 ring-indigo-200",
+};

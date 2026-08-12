@@ -2,19 +2,24 @@
 
 import { useState } from "react";
 import { Plus, Trash2, Star } from "lucide-react";
-import { fetcher } from "@/lib/utils";
+import {
+  addWishlist as addWishlistEntry,
+  removeWishlist as deleteWishlistEntry,
+} from "@/actions/shelf";
 import type { Wishlist } from "@/generated/prisma/client";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import EmptyState from "@/components/ui/EmptyState";
 import { showToast } from "@/components/ui/ToastContainer";
 
+export type WishlistItem = Pick<Wishlist, "id" | "title" | "author">;
+
 export default function WishlistSection({
   initialWishlist,
 }: {
-  initialWishlist: Wishlist[];
+  initialWishlist: WishlistItem[];
 }) {
-  const [wishlist, setWishlist] = useState(initialWishlist);
+  const [wishlist, setWishlist] = useState<WishlistItem[]>(initialWishlist);
   const [wishTitle, setWishTitle] = useState("");
   const [wishAuthor, setWishAuthor] = useState("");
 
@@ -22,12 +27,8 @@ export default function WishlistSection({
     e.preventDefault();
     if (!wishTitle.trim()) return;
     try {
-      const data = await fetcher<{ item: Wishlist }>("/api/wishlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: wishTitle, author: wishAuthor }),
-      });
-      setWishlist((prev) => [data.item, ...prev]);
+      const { item } = await addWishlistEntry(wishTitle, wishAuthor);
+      setWishlist((prev) => [item, ...prev]);
       setWishTitle("");
       setWishAuthor("");
       showToast("Added to your wishlist!");
@@ -38,7 +39,7 @@ export default function WishlistSection({
 
   const removeWish = async (id: string) => {
     try {
-      await fetcher(`/api/wishlist/${id}`, { method: "DELETE" });
+      await deleteWishlistEntry(id);
       setWishlist((prev) => prev.filter((w) => w.id !== id));
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Could not remove", "error");

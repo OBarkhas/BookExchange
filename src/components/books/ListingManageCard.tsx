@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -13,7 +13,11 @@ import {
   Lock,
 } from "lucide-react";
 import type { Book } from "@/generated/prisma/client";
-import { fetcher, formatPrice, cn } from "@/lib/utils";
+import {
+  toggleListingAvailability,
+  deleteListing as deleteListingAction,
+} from "@/actions/listings";
+import { formatPrice, cn } from "@/lib/utils";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import BookForm from "./BookForm";
@@ -36,6 +40,11 @@ export default function ListingManageCard({
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [busy, setBusy] = useState<"toggle" | "delete" | null>(null);
+  const [, startTransition] = useTransition();
+  const [optimisticAvailable, addOptimistic] = useOptimistic(
+    book.isAvailable,
+    (_current: boolean, next: boolean) => next,
+  );
 
   const locked = hasActiveExchange;
   const forSale = book.price != null;
@@ -43,26 +52,24 @@ export default function ListingManageCard({
 
   const statusBadge = locked
     ? { label: "In exchange", cls: "bg-violet-50 text-violet-700 ring-violet-200" }
-    : !book.isAvailable
+    : !optimisticAvailable
       ? { label: "Sold", cls: "bg-stone-100 text-stone-500 ring-stone-200" }
       : { label: "Live", cls: "bg-emerald-50 text-emerald-700 ring-emerald-200" };
 
   const toggleAvailable = async () => {
+    const next = !optimisticAvailable;
     setBusy("toggle");
+    startTransition(() => addOptimistic(next));
     try {
-      await fetcher(`/api/listings/${book.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isAvailable: !book.isAvailable }),
-      });
+      await toggleListingAvailability(book.id, next);
       showToast(
-        book.isAvailable
+        next
           ? "Marked as sold — hidden from the marketplace"
           : "Listing is live again 🎉",
-        book.isAvailable ? "info" : "success",
+        next ? "info" : "success",
       );
-      router.refresh();
     } catch (err) {
+      addOptimistic(book.isAvailable);
       showToast(err instanceof Error ? err.message : "Action failed", "error");
     } finally {
       setBusy(null);
@@ -72,10 +79,9 @@ export default function ListingManageCard({
   const deleteListing = async () => {
     setBusy("delete");
     try {
-      await fetcher(`/api/listings/${book.id}`, { method: "DELETE" });
+      await deleteListingAction(book.id);
       setDeleteOpen(false);
       showToast("Listing deleted");
-      router.refresh();
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Could not delete", "error");
     } finally {
@@ -101,6 +107,8 @@ export default function ListingManageCard({
         <img
           src={cover}
           alt={book.title}
+          loading="lazy"
+          decoding="async"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
       ) : (
@@ -149,7 +157,7 @@ export default function ListingManageCard({
         title={
           locked
             ? "This book is part of an active exchange"
-            : book.isAvailable
+            : optimisticAvailable
               ? "Mark as sold / unavailable"
               : "Bring the listing back live"
         }
@@ -157,12 +165,12 @@ export default function ListingManageCard({
       >
         {busy === "toggle" ? (
           <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-stone-300 border-t-amber-500" />
-        ) : book.isAvailable ? (
+        ) : optimisticAvailable ? (
           <EyeOff className="h-3.5 w-3.5" />
         ) : (
           <Eye className="h-3.5 w-3.5" />
         )}
-        {book.isAvailable ? "Mark sold" : "Relist"}
+        {optimisticAvailable ? "Mark sold" : "Relist"}
       </button>
       <button
         type="button"

@@ -17,7 +17,10 @@ export default async function MessagesPage() {
       ],
     },
     orderBy: { createdAt: "desc" },
-    include: {
+    select: {
+      id: true,
+      status: true,
+      createdAt: true,
       book: { select: { title: true } },
       sender: { select: { id: true, name: true, imageUrl: true } },
       receiver: { select: { id: true, name: true, imageUrl: true } },

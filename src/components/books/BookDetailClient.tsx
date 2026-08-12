@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import {
@@ -10,14 +10,19 @@ import {
   EyeOff,
   ArrowLeftRight,
   Send,
+  CheckCircle2,
 } from "lucide-react";
-import { fetcher } from "@/lib/utils";
+import {
+  bumpListing,
+  toggleListingAvailability,
+  deleteListing,
+  requestBook,
+} from "@/actions/listings";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Textarea from "@/components/ui/Textarea";
 import Input from "@/components/ui/Input";
 import { showToast } from "@/components/ui/ToastContainer";
-
 
 export function ListingOwnerActions({
   bookId,
@@ -32,31 +37,33 @@ export function ListingOwnerActions({
   const { user } = useUser();
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [, startTransition] = useTransition();
+  const [optimisticAvailable, addOptimistic] = useOptimistic(
+    isAvailable,
+    (_current: boolean, next: boolean) => next,
+  );
 
   const run = async (action: "bump" | "toggle" | "delete") => {
     setBusy(action);
     try {
       if (action === "bump") {
-        await fetcher(`/api/listings/${bookId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ bump: true }),
-        });
+        await bumpListing(bookId);
         showToast("Bumped to the top! ⚡ Your listing got 30 more days.");
       } else if (action === "toggle") {
-        await fetcher(`/api/listings/${bookId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ isAvailable: !isAvailable }),
-        });
-        showToast(isAvailable ? "Listing paused" : "Listing is live again", "info");
+        const next = !optimisticAvailable;
+        startTransition(() => addOptimistic(next));
+        await toggleListingAvailability(bookId, next);
+        showToast(
+          next ? "Listing paused" : "Listing is live again",
+          "info",
+        );
       } else {
-        await fetcher(`/api/listings/${bookId}`, { method: "DELETE" });
+        await deleteListing(bookId);
         showToast("Listing deleted");
         router.push(user ? `/profile/${user.id}` : "/browse");
       }
-      router.refresh();
     } catch (err) {
+      addOptimistic(isAvailable);
       showToast(err instanceof Error ? err.message : "Action failed", "error");
     } finally {
       setBusy(null);
@@ -80,7 +87,7 @@ export function ListingOwnerActions({
           loading={busy === "toggle"}
           onClick={() => run("toggle")}
         >
-          {isAvailable ? (
+          {optimisticAvailable ? (
             <>
               <EyeOff className="h-3.5 w-3.5" /> Pause
             </>
@@ -128,7 +135,6 @@ export function ListingOwnerActions({
   );
 }
 
-
 export function RequestBookButton({
   listingId,
   available,
@@ -143,28 +149,43 @@ export function RequestBookButton({
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [offeredBook, setOfferedBook] = useState("");
+  const [, startTransition] = useTransition();
+  const [optimisticSent, addOptimistic] = useOptimistic(
+    false,
+    (_current: boolean, next: boolean) => next,
+  );
 
   const submit = async () => {
     setSubmitting(true);
+    startTransition(() => addOptimistic(true));
     try {
-      await fetcher(`/api/listings/${listingId}/request`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: message.trim(),
-          offeredBook: offeredBook.trim(),
-        }),
-      });
+      await requestBook(listingId, message, offeredBook);
       setOpen(false);
       showToast("Request sent! Chat is now open 💬");
       router.push("/messages");
-      router.refresh();
     } catch (err) {
+      addOptimistic(false);
       showToast(err instanceof Error ? err.message : "Could not send request", "error");
     } finally {
       setSubmitting(false);
     }
   };
+
+  if (optimisticSent) {
+    return (
+      <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3.5">
+        <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
+        <div>
+          <p className="text-sm font-semibold text-emerald-800">
+            Request sent — chat is open!
+          </p>
+          <p className="mt-0.5 text-xs text-emerald-600">
+            Head to Messages to arrange your swap.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

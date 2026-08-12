@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Trash2, ChevronRight } from "lucide-react";
-import { fetcher, timeAgo, cn } from "@/lib/utils";
+import { deleteConversation } from "@/actions/requests";
+import { timeAgo, cn } from "@/lib/utils";
 import {
   REQUEST_STATUS_COLORS,
   REQUEST_STATUS_LABELS,
@@ -39,11 +39,9 @@ export default function ConversationRow({
   conversation,
   myId,
 }: ConversationRowProps) {
-  const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [removing, setRemoving] = useState(false);
-  const [, startTransition] = useTransition();
 
   const counterpart =
     conversation.sender.id === myId
@@ -55,12 +53,9 @@ export default function ConversationRow({
     setDeleting(true);
     setRemoving(true);
     try {
-      await fetcher(`/api/requests/${conversation.id}/conversation`, {
-        method: "DELETE",
-      });
+      await deleteConversation(conversation.id);
       setConfirming(false);
       showToast("Conversation deleted");
-      startTransition(() => router.refresh());
     } catch (err) {
       setRemoving(false);
       showToast(

@@ -59,6 +59,8 @@ export default function RequestCard({ request, myId }: RequestCardProps) {
               <img
                 src={cover}
                 alt={request.book.title}
+                loading="lazy"
+                decoding="async"
                 className="h-full w-full object-cover"
               />
             ) : (

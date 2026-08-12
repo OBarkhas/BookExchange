@@ -1,17 +1,26 @@
 import Link from "next/link";
 import { BookOpen, MapPin, ArrowLeftRight } from "lucide-react";
-import type { Book, User } from "@/generated/prisma/client";
+import type { BookCondition, ListingType, User } from "@/generated/prisma/client";
 import {
   CONDITION_COLORS,
   CONDITION_LABELS,
-  LISTING_TYPE_COLORS,
-  LISTING_TYPE_LABELS,
+  FEED_BOOK_COLORS,
+  FEED_BOOK_LABELS,
 } from "@/lib/categories";
 import { formatPrice, timeAgo } from "@/lib/utils";
 import StatusBadge from "@/components/ui/StatusBadge";
 import Avatar from "@/components/ui/Avatar";
 
-export type BookCardBook = Book & {
+export type BookCardBook = {
+  id: string;
+  title: string;
+  author: string;
+  category: string;
+  condition: BookCondition;
+  listingType: ListingType;
+  price: number | null;
+  images: string[];
+  lastBumpedAt: Date;
   user: Pick<User, "id" | "name" | "imageUrl" | "district">;
 };
 
@@ -33,6 +42,8 @@ export default function BookCard({ book }: BookCardProps) {
           <img
             src={cover}
             alt={book.title}
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
@@ -42,8 +53,8 @@ export default function BookCard({ book }: BookCardProps) {
         )}
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
           <StatusBadge
-            label={LISTING_TYPE_LABELS[book.listingType]}
-            className={LISTING_TYPE_COLORS[book.listingType]}
+            label={FEED_BOOK_LABELS[book.listingType]}
+            className={FEED_BOOK_COLORS[book.listingType]}
           />
         </div>
         {forSale && (

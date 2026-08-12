@@ -1,10 +1,11 @@
 import type { User } from "@clerk/nextjs/server";
 import Link from "next/link";
-import { BookOpen, Library, Repeat, Users, BadgeCheck } from "lucide-react";
-import type { UserBadge } from "@/generated/prisma/client";
+import { BookOpen, Library, Repeat, Users, Sparkles } from "lucide-react";
+import type { FeedItem } from "@/lib/feed";
 import AppShell from "@/components/navbar/AppShell";
-import QuickActions from "@/components/home/QuickActions";
-import BookCard, { type BookCardBook } from "@/components/books/BookCard";
+import PostComposer from "@/components/feed/PostComposer";
+import FeedGrid from "@/components/feed/FeedGrid";
+import EmptyState from "@/components/ui/EmptyState";
 import { initials } from "@/lib/utils";
 
 interface SignedInHomeProps {
@@ -12,8 +13,7 @@ interface SignedInHomeProps {
   myListings: number;
   activeExchanges: number;
   memberCount: number;
-  recentListings: BookCardBook[];
-  badges: UserBadge[];
+  feed: FeedItem[];
 }
 
 export default function SignedInHome({
@@ -21,8 +21,7 @@ export default function SignedInHome({
   myListings,
   activeExchanges,
   memberCount,
-  recentListings,
-  badges,
+  feed,
 }: SignedInHomeProps) {
   const displayName = [user.firstName, user.lastName].filter(Boolean).join(" ");
   const email = user.emailAddresses[0]?.emailAddress ?? "";
@@ -36,12 +35,12 @@ export default function SignedInHome({
   return (
     <AppShell userId={user.id}>
       <div className="py-2">
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 p-8 shadow-xl shadow-amber-500/25 sm:p-10">
+        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 p-6 shadow-xl shadow-amber-500/25 sm:p-8">
           <div className="absolute inset-0 bg-[radial-gradient(#ffffff33_1px,transparent_1px)] bg-[size:20px_20px] opacity-30" />
           <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/15 blur-2xl" />
 
-          <div className="relative flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-5">
+          <div className="relative flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-4">
               <Link
                 href={`/profile/${user.id}`}
                 title="Open my profile"
@@ -51,10 +50,12 @@ export default function SignedInHome({
                   <img
                     src={user.imageUrl}
                     alt={displayName || "Profile"}
-                    className="h-16 w-16 rounded-2xl border-2 border-white/60 object-cover shadow-lg sm:h-20 sm:w-20"
+                    loading="lazy"
+                    decoding="async"
+                    className="h-14 w-14 rounded-2xl border-2 border-white/60 object-cover shadow-lg sm:h-16 sm:w-16"
                   />
                 ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-white/60 bg-white/20 text-2xl font-bold text-white shadow-lg sm:h-20 sm:w-20">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-white/60 bg-white/20 text-xl font-bold text-white shadow-lg sm:h-16 sm:w-16">
                     {initials(displayName)}
                   </div>
                 )}
@@ -63,7 +64,7 @@ export default function SignedInHome({
                 <p className="text-sm font-medium text-amber-50/90">
                   Welcome back,
                 </p>
-                <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
                   {displayName || "Book Lover"} 👋
                 </h1>
                 <p className="mt-1 flex items-center gap-1.5 text-sm text-amber-50/80">
@@ -73,24 +74,15 @@ export default function SignedInHome({
               </div>
             </div>
 
-            <Link
-              href={`/profile/${user.id}`}
-              className="flex flex-wrap items-center gap-2 rounded-2xl bg-white/15 px-4 py-3 backdrop-blur-sm transition-colors hover:bg-white/25"
-            >
-              <span className="text-sm font-medium text-white">
-                {badges.length > 0
-                  ? `${badges.length} badge${badges.length > 1 ? "s" : ""} earned`
-                  : "Your account is synced"}
-              </span>
-              {badges.length > 0 && (
-                <span className="text-base">{badges[0].icon}</span>
-              )}
-              <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,0.9)]" />
-            </Link>
+            <PostComposer
+              label="Post"
+              variant="glass"
+              className="hidden sm:inline-flex"
+            />
           </div>
         </section>
 
-        <section className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <section className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {stats.map((stat) => (
             <div
               key={stat.label}
@@ -107,70 +99,32 @@ export default function SignedInHome({
           ))}
         </section>
 
-        {badges.length > 0 && (
-          <section className="mt-8">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-zinc-900">
-              <BadgeCheck className="h-5 w-5 text-amber-500" />
-              Your badges
-            </h2>
-            <div className="flex flex-wrap gap-3">
-              {badges.slice(0, 6).map((badge) => (
-                <div
-                  key={badge.id}
-                  className="flex items-center gap-2 rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 to-yellow-50 px-4 py-2.5 shadow-sm"
-                >
-                  <span className="text-xl">{badge.icon}</span>
-                  <span className="text-sm font-semibold text-zinc-900">
-                    {badge.badgeName}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
         <section className="mt-8">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-zinc-900">
-              Fresh on the market
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900">
+              <Sparkles className="h-5 w-5 text-amber-500" />
+              Community Feed
             </h2>
-            <Link
-              href="/browse"
-              className="text-sm font-medium text-amber-600 hover:text-amber-700"
-            >
-              Browse all →
-            </Link>
-          </div>
-          {recentListings.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-amber-200 bg-white/60 px-6 py-12 text-center">
-              <p className="text-2xl">📚</p>
-              <p className="mt-2 font-semibold text-zinc-900">
-                The market is waiting for your books
-              </p>
-              <p className="mt-1 text-sm text-stone-500">
-                Be the first to list a book in your community.
-              </p>
+            <div className="flex items-center gap-3">
+              <PostComposer label="Post" />
               <Link
-                href="/listings/new"
-                className="mt-4 inline-flex rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-amber-500/30 transition-all hover:from-amber-600 hover:to-amber-700"
+                href="/browse"
+                className="text-sm font-medium text-amber-600 transition-colors hover:text-amber-700"
               >
-                List your first book
+                Browse all →
               </Link>
             </div>
+          </div>
+          {feed.length === 0 ? (
+            <EmptyState
+              icon={Sparkles}
+              title="The feed is waiting for you"
+              description="List a book or post a request to kick things off for your community."
+              action={<PostComposer label="Start posting" />}
+            />
           ) : (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {recentListings.map((book) => (
-                <BookCard key={book.id} book={book} />
-              ))}
-            </div>
+            <FeedGrid items={feed} />
           )}
-        </section>
-
-        <section className="mt-8">
-          <h2 className="mb-4 text-lg font-semibold text-zinc-900">
-            Jump back in
-          </h2>
-          <QuickActions />
         </section>
 
         <footer className="mt-14 border-t border-amber-100 pb-4 pt-6 text-center text-sm text-stone-400">

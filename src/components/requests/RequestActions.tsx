@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useOptimistic, useTransition } from "react";
 import { Check, X, CheckCheck, Ban } from "lucide-react";
-import { fetcher } from "@/lib/utils";
+import { updateRequestStatus } from "@/actions/requests";
 import { showToast } from "@/components/ui/ToastContainer";
 import type { RequestStatus } from "@/generated/prisma/client";
 
@@ -18,18 +17,16 @@ export default function RequestActions({
   status,
   isOwner,
 }: RequestActionsProps) {
-  const router = useRouter();
-  const [busy, setBusy] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const [optimisticStatus, addOptimistic] = useOptimistic(
+    status,
+    (_current: RequestStatus, next: RequestStatus) => next,
+  );
 
   const transition = async (nextStatus: RequestStatus) => {
-    setBusy(nextStatus);
+    startTransition(() => addOptimistic(nextStatus));
     try {
-      await fetcher(`/api/requests/${requestId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: nextStatus }),
-      });
+      await updateRequestStatus(requestId, nextStatus);
       if (nextStatus === "ACCEPTED") {
         showToast("Request accepted — chat unlocked! 🎉");
       } else if (nextStatus === "REJECTED") {
@@ -37,28 +34,26 @@ export default function RequestActions({
       } else if (nextStatus === "COMPLETED") {
         showToast("Exchange completed! 🏆");
       }
-      startTransition(() => router.refresh());
     } catch (err) {
+      addOptimistic(status);
       showToast(err instanceof Error ? err.message : "Action failed", "error");
-    } finally {
-      setBusy(null);
     }
   };
 
-  if (status === "PENDING" && isOwner) {
+  if (optimisticStatus === "PENDING" && isOwner) {
     return (
       <div className="flex gap-2">
         <button
+          type="button"
           onClick={() => transition("ACCEPTED")}
-          disabled={busy !== null}
-          className="inline-flex items-center gap-1 rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-emerald-600 active:scale-95 disabled:opacity-60"
+          className="inline-flex items-center gap-1 rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-emerald-600 active:scale-95"
         >
           <Check className="h-3.5 w-3.5" /> Accept
         </button>
         <button
+          type="button"
           onClick={() => transition("REJECTED")}
-          disabled={busy !== null}
-          className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 transition-all hover:bg-rose-50 active:scale-95 disabled:opacity-60"
+          className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 transition-all hover:bg-rose-50 active:scale-95"
         >
           <X className="h-3.5 w-3.5" /> Decline
         </button>
@@ -66,24 +61,24 @@ export default function RequestActions({
     );
   }
 
-  if (status === "PENDING") {
+  if (optimisticStatus === "PENDING") {
     return (
       <button
+        type="button"
         onClick={() => transition("REJECTED")}
-        disabled={busy !== null}
-        className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-semibold text-stone-500 transition-all hover:bg-stone-50 active:scale-95 disabled:opacity-60"
+        className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-semibold text-stone-500 transition-all hover:bg-stone-50 active:scale-95"
       >
         <Ban className="h-3.5 w-3.5" /> Cancel request
       </button>
     );
   }
 
-  if (status === "ACCEPTED") {
+  if (optimisticStatus === "ACCEPTED") {
     return (
       <button
+        type="button"
         onClick={() => transition("COMPLETED")}
-        disabled={busy !== null}
-        className="inline-flex items-center gap-1 rounded-lg bg-violet-500 px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-violet-600 active:scale-95 disabled:opacity-60"
+        className="inline-flex items-center gap-1 rounded-lg bg-violet-500 px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-violet-600 active:scale-95"
       >
         <CheckCheck className="h-3.5 w-3.5" /> Mark completed
       </button>

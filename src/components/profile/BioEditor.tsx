@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useOptimistic, useState, useTransition } from "react";
 import { Pencil } from "lucide-react";
-import { fetcher } from "@/lib/utils";
+import { updateBio } from "@/actions/profile";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Textarea from "@/components/ui/Textarea";
@@ -12,35 +11,34 @@ import { showToast } from "@/components/ui/ToastContainer";
 const MAX_BIO_LENGTH = 300;
 
 interface BioEditorProps {
-  profileId: string;
   initialBio: string | null;
   canEdit: boolean;
 }
 
-export default function BioEditor({
-  profileId,
-  initialBio,
-  canEdit,
-}: BioEditorProps) {
-  const router = useRouter();
+export default function BioEditor({ initialBio, canEdit }: BioEditorProps) {
   const [open, setOpen] = useState(false);
   const [bio, setBio] = useState(initialBio ?? "");
   const [saving, setSaving] = useState(false);
+  const [, startTransition] = useTransition();
+  const [optimisticBio, addOptimistic] = useOptimistic(
+    initialBio ?? "",
+    (_current: string, next: string) => next,
+  );
 
   if (!canEdit && !initialBio) return null;
 
   const save = async () => {
+    const trimmed = bio.trim();
+    if (!trimmed) return;
     setSaving(true);
+    startTransition(() => addOptimistic(trimmed));
     try {
-      await fetcher(`/api/users/${profileId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bio: bio.trim() }),
-      });
+      await updateBio(trimmed);
       setOpen(false);
+      setBio(trimmed);
       showToast("Bio updated ✨");
-      router.refresh();
     } catch (err) {
+      addOptimistic(initialBio ?? "");
       showToast(err instanceof Error ? err.message : "Could not save bio", "error");
     } finally {
       setSaving(false);
@@ -51,7 +49,7 @@ export default function BioEditor({
     <>
       <div className="mt-5 flex items-start justify-between gap-4">
         <p className="max-w-2xl text-sm leading-relaxed text-stone-600">
-          {initialBio ?? (
+          {optimisticBio || (
             <span className="italic text-stone-400">
               No bio yet — tell the community about yourself.
             </span>
@@ -80,11 +78,7 @@ export default function BioEditor({
             <Button variant="ghost" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button
-              loading={saving}
-              disabled={!bio.trim()}
-              onClick={save}
-            >
+            <Button loading={saving} disabled={!bio.trim()} onClick={save}>
               Save bio
             </Button>
           </>

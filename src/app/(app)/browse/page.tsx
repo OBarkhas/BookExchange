@@ -4,9 +4,10 @@ import type { BookCondition, ListingType } from "@/generated/prisma/client";
 import BookCard, { type BookCardBook } from "@/components/books/BookCard";
 import BookFilters, { type FilterState } from "@/components/books/BookFilters";
 import EventBanner from "@/components/events/EventBanner";
+import PostCard from "@/components/feed/PostCard";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
-import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, MessagesSquare } from "lucide-react";
 
 const PAGE_SIZE = 12;
 
@@ -87,37 +88,73 @@ export default async function BrowsePage({
           ? { createdAt: "asc" as const }
           : { lastBumpedAt: "desc" as const };
 
-  const [listings, total, districtsResult, upcomingEvents] = await Promise.all([
-    db.book.findMany({
-      where,
-      orderBy,
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-      include: {
-        user: { select: { id: true, name: true, imageUrl: true, district: true } },
-      },
-    }),
-    db.book.count({ where }),
-    db.user.findMany({
-      where: {
-        books: { some: { isAvailable: true, expiresAt: { gt: new Date() } } },
-      },
-      select: { district: true },
-      distinct: ["district"],
-    }),
-    db.event.findMany({
-      where: { eventDate: { gte: new Date() } },
-      orderBy: { eventDate: "asc" },
-      take: 3,
-      select: {
-        id: true,
-        title: true,
-        location: true,
-        eventDate: true,
-        _count: { select: { attendees: true } },
-      },
-    }),
-  ]);
+  const [listings, total, districtsResult, upcomingEvents, posts] =
+    await Promise.all([
+      db.book.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
+        select: {
+          id: true,
+          title: true,
+          author: true,
+          category: true,
+          condition: true,
+          listingType: true,
+          price: true,
+          images: true,
+          lastBumpedAt: true,
+          user: {
+            select: { id: true, name: true, imageUrl: true, district: true },
+          },
+        },
+      }),
+      db.book.count({ where }),
+      db.user.findMany({
+        where: {
+          books: { some: { isAvailable: true, expiresAt: { gt: new Date() } } },
+        },
+        select: { district: true },
+        distinct: ["district"],
+      }),
+      db.event.findMany({
+        where: { eventDate: { gte: new Date() } },
+        orderBy: { eventDate: "asc" },
+        take: 3,
+        select: {
+          id: true,
+          title: true,
+          location: true,
+          eventDate: true,
+          _count: { select: { attendees: true } },
+        },
+      }),
+      db.communityPost.findMany({
+        where: {
+          ...(q
+            ? {
+                OR: [
+                  { title: { contains: q, mode: "insensitive" as const } },
+                  { body: { contains: q, mode: "insensitive" as const } },
+                ],
+              }
+            : {}),
+          ...(category ? { category } : {}),
+        },
+        orderBy: { createdAt: "desc" },
+        take: 12,
+        select: {
+          id: true,
+          kind: true,
+          title: true,
+          body: true,
+          category: true,
+          createdAt: true,
+          user: { select: { id: true, name: true, imageUrl: true } },
+        },
+      }),
+    ]);
 
   const districts = districtsResult
     .map((u) => u.district)
@@ -147,6 +184,25 @@ export default async function BrowsePage({
       <EventBanner events={upcomingEvents} />
 
       <BookFilters key={filterKey} initial={initialFilters} districts={districts} />
+
+      {posts.length > 0 && (
+        <section className="mt-8">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
+              <MessagesSquare className="h-4 w-4 text-violet-500" />
+              Community posts
+            </h2>
+            <span className="text-xs text-stone-400">
+              {posts.length} recent
+            </span>
+          </div>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {posts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {listings.length === 0 ? (
         <div className="mt-6">

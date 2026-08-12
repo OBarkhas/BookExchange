@@ -2,10 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { BellRing, Trash2, Check, Inbox } from "lucide-react";
-import { fetcher, timeAgo } from "@/lib/utils";
+import {
+  markNotificationRead,
+  markAllNotificationsRead,
+  deleteNotification,
+} from "@/actions/notifications";
+import { fetcher, timeAgo, cn } from "@/lib/utils";
 import Button from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
-import { cn } from "@/lib/utils";
 
 interface NotificationItem {
   id: string;
@@ -40,21 +44,19 @@ export default function NotificationsList() {
 
   const markAllRead = async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    await fetcher("/api/notifications", { method: "PATCH" }).catch(() => {});
+    await markAllNotificationsRead().catch(() => {});
   };
 
   const markRead = (id: string) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
     );
-    fetch(`/api/notifications/${id}`, { method: "PATCH" }).catch(() => {});
+    markNotificationRead(id).catch(() => {});
   };
 
   const remove = async (id: string) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
-    await fetcher(`/api/notifications/${id}`, { method: "DELETE" }).catch(
-      () => {},
-    );
+    await deleteNotification(id).catch(() => {});
   };
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;

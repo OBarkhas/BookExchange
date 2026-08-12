@@ -74,6 +74,8 @@ export default async function MessageThreadPage({
               <img
                 src={cover}
                 alt={request.book.title}
+                loading="lazy"
+                decoding="async"
                 className="h-full w-full object-cover"
               />
             ) : (

@@ -27,7 +27,7 @@ export default async function EditListingPage({
         title="Edit Listing"
         subtitle="Update the details of your book listing."
       />
-      <div className="rounded-2xl border border-amber-100 bg-white/80 p-6 shadow-sm shadow-amber-900/5 backdrop-blur-sm sm:p-8">
+      <div className="rounded-2xl border border-amber-100 bg-white/80 p-4 shadow-sm shadow-amber-900/5 backdrop-blur-sm sm:p-8">
         <BookForm mode="edit" book={book} />
       </div>
     </div>

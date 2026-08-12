@@ -14,7 +14,12 @@ export default async function EventsPage() {
     db.event.findMany({
       where: { eventDate: { gte: new Date() } },
       orderBy: { eventDate: "asc" },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        location: true,
+        eventDate: true,
         organizer: { select: { id: true, name: true, imageUrl: true } },
         _count: { select: { attendees: true } },
       },

@@ -42,10 +42,12 @@ export default async function ShelfPage() {
     db.userBookShelf.findMany({
       where: { userId: user!.id },
       orderBy: { createdAt: "desc" },
+      select: { id: true, title: true, author: true, status: true, rating: true },
     }),
     db.wishlist.findMany({
       where: { userId: user!.id },
       orderBy: { createdAt: "desc" },
+      select: { id: true, title: true, author: true },
     }),
   ]);
 

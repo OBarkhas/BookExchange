@@ -85,6 +85,8 @@ export default async function ListingDetailPage({
                 <img
                   src={cover}
                   alt={book.title}
+                  loading="lazy"
+                  decoding="async"
                   className="h-full w-full object-cover"
                 />
               ) : (
@@ -94,12 +96,14 @@ export default async function ListingDetailPage({
               )}
             </div>
             {book.images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto border-t border-amber-50 p-3">
+              <div className="no-scrollbar flex gap-2 overflow-x-auto border-t border-amber-50 p-3">
                 {book.images.map((img, i) => (
                   <img
                     key={`${img}-${i}`}
                     src={img}
                     alt={`${book.title} photo ${i + 1}`}
+                    loading="lazy"
+                    decoding="async"
                     className="h-16 w-20 shrink-0 cursor-pointer rounded-lg border border-amber-100 object-cover transition-transform hover:scale-105"
                   />
                 ))}

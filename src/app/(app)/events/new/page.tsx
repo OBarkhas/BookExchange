@@ -10,7 +10,7 @@ export default function NewEventPage() {
         title="Host a Swap Meet"
         subtitle="Bring book lovers together in your neighborhood."
       />
-      <div className="rounded-2xl border border-amber-100 bg-white/80 p-6 shadow-sm shadow-amber-900/5 backdrop-blur-sm sm:p-8">
+      <div className="rounded-2xl border border-amber-100 bg-white/80 p-4 shadow-sm shadow-amber-900/5 backdrop-blur-sm sm:p-8">
         <EventForm />
       </div>
     </div>

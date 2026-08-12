@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { getDbUser } from "@/lib/auth";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
+import PostComposer from "@/components/feed/PostComposer";
 import RequestCard from "@/components/requests/RequestCard";
 import ListingManageCard from "@/components/books/ListingManageCard";
 import AnimatedTabs from "@/components/ui/AnimatedTabs";
@@ -91,6 +92,7 @@ export default async function ExchangesPage({
       <PageHeader
         title="Exchanges & Requests"
         subtitle="Incoming requests, outgoing offers and your active listings — all in one place."
+        actions={<PostComposer label="Post" />}
       />
 
       <AnimatedTabs

@@ -1,12 +1,13 @@
 "use client";
 
-import type { UserBookShelf, Wishlist } from "@/generated/prisma/client";
+import type { ShelfItem } from "./ShelfSection";
+import type { WishlistItem } from "./WishlistSection";
 import ShelfSection from "./ShelfSection";
 import WishlistSection from "./WishlistSection";
 
 interface ShelfManagerProps {
-  initialShelf: UserBookShelf[];
-  initialWishlist: Wishlist[];
+  initialShelf: ShelfItem[];
+  initialWishlist: WishlistItem[];
 }
 
 export default function ShelfManager({

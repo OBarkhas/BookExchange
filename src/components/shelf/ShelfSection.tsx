@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Plus, Trash2, BookMarked, Library, Star } from "lucide-react";
-import { fetcher } from "@/lib/utils";
+import {
+  addToShelf as addShelfItem,
+  updateShelfItem as updateShelfEntry,
+  removeShelfItem as deleteShelfEntry,
+} from "@/actions/shelf";
 import { SHELF_STATUS_LABELS } from "@/lib/categories";
 import type { ShelfStatus, UserBookShelf } from "@/generated/prisma/client";
 import Button from "@/components/ui/Button";
@@ -16,13 +19,17 @@ import { cn } from "@/lib/utils";
 
 type ShelfTab = "ALL" | ShelfStatus;
 
+export type ShelfItem = Pick<
+  UserBookShelf,
+  "id" | "title" | "author" | "status" | "rating"
+>;
+
 export default function ShelfSection({
   initialShelf,
 }: {
-  initialShelf: UserBookShelf[];
+  initialShelf: ShelfItem[];
 }) {
-  const router = useRouter();
-  const [shelf, setShelf] = useState(initialShelf);
+  const [shelf, setShelf] = useState<ShelfItem[]>(initialShelf);
   const [tab, setTab] = useState<ShelfTab>("ALL");
 
   const [showForm, setShowForm] = useState(false);
@@ -32,30 +39,23 @@ export default function ShelfSection({
   const [newRating, setNewRating] = useState(0);
   const [saving, setSaving] = useState(false);
 
-  const refresh = () => router.refresh();
-
   const addToShelf = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim() || !newAuthor.trim()) return;
     setSaving(true);
     try {
-      const data = await fetcher<{ item: UserBookShelf }>("/api/shelf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: newTitle,
-          author: newAuthor,
-          status: newStatus,
-          rating: newRating || null,
-        }),
+      const { item } = await addShelfItem({
+        title: newTitle,
+        author: newAuthor,
+        status: newStatus,
+        rating: newRating || null,
       });
-      setShelf((prev) => [data.item, ...prev]);
+      setShelf((prev) => [item, ...prev]);
       setNewTitle("");
       setNewAuthor("");
       setNewRating(0);
       setShowForm(false);
       showToast("Added to your shelf!");
-      refresh();
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Could not add book", "error");
     } finally {
@@ -68,12 +68,8 @@ export default function ShelfSection({
     patch: Partial<{ status: ShelfStatus; rating: number | null }>,
   ) => {
     try {
-      const data = await fetcher<{ item: UserBookShelf }>(`/api/shelf/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patch),
-      });
-      setShelf((prev) => prev.map((s) => (s.id === id ? data.item : s)));
+      const { item } = await updateShelfEntry(id, patch);
+      setShelf((prev) => prev.map((s) => (s.id === id ? item : s)));
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Update failed", "error");
     }
@@ -81,9 +77,8 @@ export default function ShelfSection({
 
   const removeShelfItem = async (id: string) => {
     try {
-      await fetcher(`/api/shelf/${id}`, { method: "DELETE" });
+      await deleteShelfEntry(id);
       setShelf((prev) => prev.filter((s) => s.id !== id));
-      refresh();
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Could not remove", "error");
     }

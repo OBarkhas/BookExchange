@@ -72,12 +72,14 @@ export default async function ProfilePage({
       ? db.userBookShelf.findMany({
           where: { userId: profile.id },
           orderBy: { createdAt: "desc" },
+          select: { id: true, title: true, author: true, status: true, rating: true },
         })
       : Promise.resolve<UserBookShelf[]>([]),
     isOwnProfile
       ? db.wishlist.findMany({
           where: { userId: profile.id },
           orderBy: { createdAt: "desc" },
+          select: { id: true, title: true, author: true },
         })
       : Promise.resolve<Wishlist[]>([]),
     db.exchangeRequest.count({
@@ -179,11 +181,7 @@ export default async function ProfilePage({
             </div>
           </div>
 
-          <BioEditor
-            profileId={profile.id}
-            initialBio={profile.bio}
-            canEdit={isOwnProfile}
-          />
+          <BioEditor initialBio={profile.bio} canEdit={isOwnProfile} />
           {profile.locationDetail && (
             <p className="mt-2 text-xs text-stone-400">
               📍 {profile.locationDetail}

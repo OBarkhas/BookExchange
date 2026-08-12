@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import PostComposer from "@/components/feed/PostComposer";
 
 const sections = [
   {
@@ -123,23 +124,18 @@ export default function AppSidebar({
         </div>
 
         <div className="border-t border-amber-100/80 p-4">
-          <Link
-            href="/listings/new"
-            className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-amber-500/30 transition-all duration-200 hover:from-amber-600 hover:to-amber-700 active:scale-[0.98]"
-          >
-            List a book
-          </Link>
+          <PostComposer label="Post" className="w-full" />
         </div>
       </aside>
 
       <nav
         className={cn(
-          "fixed inset-x-0 bottom-0 z-50 w-full border-t border-amber-100/80 bg-cream/95 pb-[max(env(safe-area-inset-bottom),0.375rem)] pl-[max(env(safe-area-inset-left),0.5rem)] pr-[max(env(safe-area-inset-right),0.5rem)] shadow-[0_-4px_20px_-8px_rgba(120,53,15,0.12)] backdrop-blur-md lg:hidden",
+          "fixed inset-x-0 bottom-0 z-50 w-full overflow-x-clip border-t border-amber-100/80 bg-cream/95 pb-[max(env(safe-area-inset-bottom),0.375rem)] pl-[max(env(safe-area-inset-left),0.5rem)] pr-[max(env(safe-area-inset-right),0.5rem)] shadow-[0_-4px_20px_-8px_rgba(120,53,15,0.12)] backdrop-blur-md lg:hidden",
           hideBottomNav && "max-md:hidden",
         )}
         aria-label="Primary"
       >
-        <div className="mx-auto flex w-full max-w-lg items-center justify-around gap-1 px-1 py-1.5">
+        <div className="mx-auto flex w-full max-w-lg min-w-0 items-center justify-around gap-0.5 px-1 py-2">
           {sections.map((section) => {
             const active = isSectionActive(pathname, section.href);
             const href =
@@ -149,7 +145,7 @@ export default function AppSidebar({
                 key={section.href}
                 href={href}
                 className={cn(
-                  "relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1.5 py-1.5 text-[11px] font-medium transition-colors duration-200",
+                  "relative flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1.5 py-1.5 text-[11px] font-medium transition-colors duration-200 active:scale-95",
                   active ? "text-amber-600" : "text-stone-500",
                 )}
               >

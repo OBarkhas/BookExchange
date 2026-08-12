@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
-import { BookOpen, Plus, ChevronDown, User, Bell, LogOut } from "lucide-react";
+import { BookOpen, ChevronDown, User, Bell, LogOut } from "lucide-react";
 import NotificationBell from "./NotificationBell";
+import PostComposer from "@/components/feed/PostComposer";
 import Avatar from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
 
@@ -26,7 +27,7 @@ export default function Topbar({ userId }: { userId: string }) {
 
   return (
     <header className="sticky top-0 z-30 border-b border-amber-100/80 bg-cream/85 pt-[max(env(safe-area-inset-top),0px)] backdrop-blur-md">
-      <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6">
+      <div className="mx-auto flex h-14 w-full max-w-md items-center justify-between gap-2 px-4 sm:h-16 sm:max-w-2xl sm:gap-3 sm:px-6 lg:max-w-6xl">
         <Link href="/" className="flex min-w-0 shrink items-center gap-2 sm:gap-2.5">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 shadow-sm shadow-amber-500/25">
             <BookOpen className="h-4.5 w-4.5 text-white" />
@@ -37,12 +38,10 @@ export default function Topbar({ userId }: { userId: string }) {
         </Link>
 
         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-          <Link
-            href="/listings/new"
-            className="hidden shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-amber-500/30 transition-all duration-200 hover:from-amber-600 hover:to-amber-700 active:scale-95 sm:flex"
-          >
-            <Plus className="h-4 w-4" /> List a book
-          </Link>
+          <PostComposer
+            label="Post"
+            className="hidden shrink-0 sm:inline-flex"
+          />
 
           <NotificationBell />
 

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
-import { fetcher } from "@/lib/utils";
+import { deleteConversation } from "@/actions/requests";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import { showToast } from "@/components/ui/ToastContainer";
@@ -16,20 +16,14 @@ export default function DeleteConversationButton({
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [, startTransition] = useTransition();
 
   const remove = async () => {
     setDeleting(true);
     try {
-      await fetcher(`/api/requests/${requestId}/conversation`, {
-        method: "DELETE",
-      });
+      await deleteConversation(requestId);
       setConfirming(false);
       showToast("Conversation deleted");
-      startTransition(() => {
-        router.push("/messages");
-        router.refresh();
-      });
+      router.push("/messages");
     } catch (err) {
       showToast(
         err instanceof Error ? err.message : "Could not delete conversation",

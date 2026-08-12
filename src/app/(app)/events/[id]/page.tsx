@@ -16,10 +16,17 @@ export default async function EventDetailPage({
 
   const event = await db.event.findUnique({
     where: { id },
-    include: {
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      location: true,
+      eventDate: true,
+      organizerId: true,
       organizer: { select: { id: true, name: true, imageUrl: true } },
       attendees: {
-        include: {
+        select: {
+          id: true,
           user: {
             select: { id: true, name: true, imageUrl: true, district: true },
           },

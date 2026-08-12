@@ -13,6 +13,14 @@ export async function GET() {
       db.notification.findMany({
         where: { userId: user.id },
         orderBy: [{ isRead: "asc" }, { createdAt: "desc" }],
+        select: {
+          id: true,
+          title: true,
+          message: true,
+          link: true,
+          isRead: true,
+          createdAt: true,
+        },
       }),
       db.notification.count({ where: { userId: user.id, isRead: false } }),
     ]);
